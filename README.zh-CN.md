@@ -4,7 +4,7 @@
 
 本仓库是 **Memok 的 OpenClaw 网关插件**。npm 包名仍为 **`memok-ai`**（安装目录多为 `~/.openclaw/extensions/memok-ai/`）。**完整记忆引擎**（流水线、SQLite、dreaming、**`memok-ai` CLI**）在 [核心仓](https://github.com/galaxy8691/memok-ai)；双仓说明见下文「核心与插件」。
 
-**中文文档默认以 Gitee 本仓为准：** [https://gitee.com/wik20/memok-ai-openclaw](https://gitee.com/wik20/memok-ai-openclaw) — 下文一键安装、raw 脚本地址、推荐克隆 URL 均优先使用 **Gitee**；GitHub 仅作备选镜像。
+**中文文档仅以 Gitee 本仓为准：** [https://gitee.com/wik20/memok-ai-openclaw](https://gitee.com/wik20/memok-ai-openclaw) — 下文一键安装、raw 脚本与克隆地址均使用 **Gitee**；若需 GitHub 默认流程请阅 [英文 README](./README.md)。
 
 ## 环境要求
 
@@ -17,7 +17,7 @@
 
 脚本 raw 前缀统一为：**`https://gitee.com/wik20/memok-ai-openclaw/raw/main/scripts/`**（与仓库 [https://gitee.com/wik20/memok-ai-openclaw](https://gitee.com/wik20/memok-ai-openclaw) 同源）。
 
-### Linux / macOS — 推荐（境内：Gitee 插件 + Gitee 核心 + npmmirror）
+### Linux / macOS（Gitee 插件 + Gitee 核心 + npmmirror）
 
 对应仓库脚本：[**`scripts/install-cn-linux-macos.sh`**](scripts/install-cn-linux-macos.sh)（优先从 Gitee 克隆插件，并在 **`npm install` 前** 把 **`memok-ai-core`** 指到 Gitee。）
 
@@ -25,40 +25,20 @@
 bash <(curl -fsSL https://gitee.com/wik20/memok-ai-openclaw/raw/main/scripts/install-cn-linux-macos.sh)
 ```
 
-### Linux / macOS — 备选（`package.json` 默认：核心仍从 GitHub）
-
-对应仓库脚本：[**`scripts/install-linux-macos.sh`**](scripts/install-linux-macos.sh)。脚本从 **Gitee** 下载，但安装逻辑里插件/核心默认仍按 **`package.json`** 走 **GitHub**；若你**只能**从 Gitee 拉核心，请用上面 **「推荐」** 那条，或先设置 **`MEMOK_CORE_GIT_URL`**=`https://gitee.com/wik20/memok-ai.git`（可选 **`MEMOK_CORE_GIT_REF`**=`v1.1.0`）再执行本脚本。
+若已克隆本仓库，在仓库根目录等价执行：
 
 ```bash
-bash <(curl -fsSL https://gitee.com/wik20/memok-ai-openclaw/raw/main/scripts/install-linux-macos.sh)
-```
-
-若已克隆本仓库（例如已从 Gitee `git clone`），在仓库根目录等价执行：
-
-```bash
-bash scripts/install-cn-linux-macos.sh   # 推荐
-# 或
-bash scripts/install-linux-macos.sh      # 备选
+bash scripts/install-cn-linux-macos.sh
 ```
 
 ### Windows
 
-对应仓库脚本：[**`scripts/install-windows.ps1`**](scripts/install-windows.ps1)（**`irm`** 下载脚本，**`| iex`** 执行。）
-
-**推荐（从 Gitee raw 拉脚本；并指定从 Gitee 克隆插件，安装逻辑会把核心改为 Gitee）：**
+对应仓库脚本：[**`scripts/install-windows.ps1`**](scripts/install-windows.ps1)（**`irm`** 下载脚本，**`| iex`** 执行。从 Gitee 克隆插件时安装逻辑会把核心改为 Gitee。）
 
 ```powershell
 $env:MEMOK_REPO_URL = "https://gitee.com/wik20/memok-ai-openclaw.git"
 irm https://gitee.com/wik20/memok-ai-openclaw/raw/main/scripts/install-windows.ps1 | iex
 ```
-
-**备选（脚本从 Gitee raw 下载；不设置 `MEMOK_REPO_URL` 时默认从 GitHub 克隆插件，核心仍按 `package.json` 走 GitHub）：**
-
-```powershell
-irm https://gitee.com/wik20/memok-ai-openclaw/raw/main/scripts/install-windows.ps1 | iex
-```
-
-**海外网络若 Gitee raw 不稳定**，可改用 GitHub raw（与英文 README 一致）：`https://raw.githubusercontent.com/galaxy8691/memok-ai-openclaw/main/scripts/...`
 
 **脚本大致步骤：** `npm install` → `npm run build` → `openclaw plugins install` → `openclaw memok setup` → 尝试重启网关 → 默认删除 `~/.openclaw/extensions/memok-ai-src`（**`MEMOK_KEEP_SOURCE=1`** 则保留）。
 
@@ -68,22 +48,12 @@ irm https://gitee.com/wik20/memok-ai-openclaw/raw/main/scripts/install-windows.p
 
 ## 手动安装（不用 curl 一键脚本）
 
-**推荐：从 Gitee 克隆本仓**（`package.json` 仍默认从 GitHub 拉核心，境内请先改核心再 `npm install`）：
+从 Gitee 克隆本仓；`package.json` 仍默认从 GitHub 拉核心，故 **`npm install` 前** 先把核心指到 Gitee：
 
 ```bash
 git clone https://gitee.com/wik20/memok-ai-openclaw.git
 cd memok-ai-openclaw
 npm pkg set dependencies.memok-ai-core=git+https://gitee.com/wik20/memok-ai.git#v1.1.0
-npm install && npm run build
-openclaw plugins install .
-openclaw memok setup
-```
-
-**备选：从 GitHub 克隆本仓**（网络便于访问 GitHub 时可省略 `npm pkg set`）：
-
-```bash
-git clone https://github.com/galaxy8691/memok-ai-openclaw.git
-cd memok-ai-openclaw
 npm install && npm run build
 openclaw plugins install .
 openclaw memok setup
@@ -104,8 +74,6 @@ openclaw memok setup
 
 ## 本地开发（克隆本仓）
 
-**推荐从 Gitee 克隆：**
-
 ```bash
 git clone https://gitee.com/wik20/memok-ai-openclaw.git
 cd memok-ai-openclaw
@@ -113,16 +81,6 @@ npm pkg set dependencies.memok-ai-core=git+https://gitee.com/wik20/memok-ai.git#
 npm install
 npm run build
 npm run ci    # lint + build + test
-```
-
-**若核心走 GitHub**（网络畅通），可改用 GitHub 克隆并省略 `npm pkg set`：
-
-```bash
-git clone https://github.com/galaxy8691/memok-ai-openclaw.git
-cd memok-ai-openclaw
-npm install   # 按 package.json 从 GitHub 解析 memok-ai-core
-npm run build
-npm run ci
 ```
 
 ## 本插件做什么
