@@ -2,7 +2,7 @@
 
 English | [简体中文](./README.zh-CN.md) · Website: [memok-ai.com](https://www.memok-ai.com/) · Mirror (中文文档 / 境内安装): [Gitee](https://gitee.com/wik20/memok-ai-openclaw)
 
-This **npm package** (`name: memok-ai`) is the **OpenClaw gateway extension** only. The memory engine (article pipeline, SQLite import, dreaming, CLI) lives in the core repo **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)** and is installed here as the dependency **`memok-ai-core`** (Git tag `v1.1.0` by default; includes `prepare` → `npm run build`, so first install compiles native `better-sqlite3`).
+This **npm package** (`name: memok-ai`) is the **OpenClaw gateway extension** only. The memory engine (article pipeline, SQLite import, dreaming, CLI) lives in the core repo **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)** and is installed here as the dependency **`memok-ai-core`** (`git+https://github.com/galaxy8691/memok-ai.git#v1.1.0`; includes `prepare` → `npm run build`, so first install compiles native `better-sqlite3`). `package-lock.json` pins HTTPS so CI/agents work without SSH keys to GitHub.
 
 **This repository** ([GitHub](https://github.com/galaxy8691/memok-ai-openclaw), [Gitee mirror](https://gitee.com/wik20/memok-ai-openclaw)) holds the thin plugin sources (`src/plugin.ts`, `openclaw.plugin.json`, skills). Clone/install URLs in docs point at **memok-ai-openclaw**.
 
