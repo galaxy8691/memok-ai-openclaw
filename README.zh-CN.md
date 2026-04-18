@@ -2,11 +2,13 @@
 
 [English](./README.md) | 简体中文 · 官网：[memok-ai.com](https://www.memok-ai.com/)
 
-**Gitee 镜像（中文 / 境内安装入口）：** [gitee.com/wik20/memok-ai](https://gitee.com/wik20/memok-ai)。下文安装命令中的脚本与 `git clone` 均指向本仓库 Gitee 镜像（`wik20/memok-ai`）。若你使用 fork 后的地址，请自行替换 URL。在 Gitee 网页端可将仓库 **「展示 README」** 设为 `README.zh-CN.md`，便于只阅读中文版。
+**Gitee 镜像（中文 / 境内安装入口）：** [gitee.com/wik20/memok-ai-openclaw](https://gitee.com/wik20/memok-ai-openclaw)。下文安装命令中的脚本与 `git clone` 均指向本仓库 Gitee 镜像（`wik20/memok-ai-openclaw`）。若你使用 fork 后的地址，请自行替换 URL。在 Gitee 网页端可将仓库 **「展示 README」** 设为 `README.zh-CN.md`，便于只阅读中文版。
 
-**双远端推送（示例）：** `git remote add gitee https://gitee.com/wik20/memok-ai.git`（若尚未添加），之后与 GitHub 相同分支一并推送即可，例如 `git push origin main` 与 `git push gitee main`（将 `origin` / `gitee` 换成你的 remote 名）。Gitee 与 GitHub 可保持同一分支内容；仅首页展示语言通过上述 README 设置区分。
+**双远端推送（示例）：** `git remote add gitee https://gitee.com/wik20/memok-ai-openclaw.git`（若尚未添加），之后与 GitHub 相同分支一并推送即可，例如 `git push origin main` 与 `git push gitee main`（将 `origin` / `gitee` 换成你的 remote 名）。Gitee 与 GitHub 可保持同一分支内容；仅首页展示语言通过上述 README 设置区分。
 
 `memok-ai` 是一个基于 Node.js + TypeScript 的记忆流水线项目，用 OpenAI 兼容接口提取长文/对话记忆并写入 SQLite，支持召回、强化和 dreaming 流程。
+
+**本仓库**为 **OpenClaw 插件**发行树（[GitHub](https://github.com/galaxy8691/memok-ai-openclaw)、[Gitee 镜像](https://gitee.com/wik20/memok-ai-openclaw)）。若将「纯 memok 核心 / 仅 CLI」另立仓库，可与本插件仓并行维护；本文档与安装脚本中的克隆地址均指向当前插件仓库。
 
 ## 功能概览
 
@@ -82,26 +84,26 @@ npm run dev -- --help
 
 ```bash
 # Linux / macOS（脚本从 Gitee 拉取；须指定克隆源为 Gitee，否则脚本内仍默认 GitHub）
-export MEMOK_REPO_URL="https://gitee.com/wik20/memok-ai.git"
-bash <(curl -fsSL https://gitee.com/wik20/memok-ai/raw/main/scripts/install-linux-macos.sh)
+export MEMOK_REPO_URL="https://gitee.com/wik20/memok-ai-openclaw.git"
+bash <(curl -fsSL https://gitee.com/wik20/memok-ai-openclaw/raw/main/scripts/install-linux-macos.sh)
 ```
 
 中国大陆网络推荐（默认 Gitee 源码 + npmmirror；可用环境变量改回 GitHub）：
 
 ```bash
-bash <(curl -fsSL https://gitee.com/wik20/memok-ai/raw/main/scripts/install-cn-linux-macos.sh)
+bash <(curl -fsSL https://gitee.com/wik20/memok-ai-openclaw/raw/main/scripts/install-cn-linux-macos.sh)
 ```
 
 ```powershell
 # Windows PowerShell（与 GitHub 版脚本相同；指定从 Gitee 克隆源码）
-$env:MEMOK_REPO_URL = "https://gitee.com/wik20/memok-ai.git"
-irm https://gitee.com/wik20/memok-ai/raw/main/scripts/install-windows.ps1 | iex
+$env:MEMOK_REPO_URL = "https://gitee.com/wik20/memok-ai-openclaw.git"
+irm https://gitee.com/wik20/memok-ai-openclaw/raw/main/scripts/install-windows.ps1 | iex
 ```
 
 ```cmd
 :: Windows CMD（先下载再运行；再设环境变量后执行）
-curl -L -o install-windows.cmd https://gitee.com/wik20/memok-ai/raw/main/scripts/install-windows.cmd
-set MEMOK_REPO_URL=https://gitee.com/wik20/memok-ai.git
+curl -L -o install-windows.cmd https://gitee.com/wik20/memok-ai-openclaw/raw/main/scripts/install-windows.cmd
+set MEMOK_REPO_URL=https://gitee.com/wik20/memok-ai-openclaw.git
 install-windows.cmd
 ```
 
@@ -119,7 +121,7 @@ install-windows.cmd
 - `MEMOK_SKIP_GATEWAY_RESTART=1`（跳过脚本末尾的网关重启步骤）
 - `MEMOK_GATEWAY_RESTART_TIMEOUT_SECONDS`（默认 `120`；Bash 在可用时用 `timeout` 包裹网关重启；PowerShell 用 `Start-Process` + `WaitForExit` 实现同等超时上限）
 - `MEMOK_KEEP_SOURCE=1`（调试时保留源码目录）
-- `MEMOK_REPO_URL_CN`（可选自定义主仓库；**国内安装脚本默认 Gitee**，未设置时为 `https://gitee.com/wik20/memok-ai.git`）
+- `MEMOK_REPO_URL_CN`（可选自定义主仓库；**国内安装脚本默认 Gitee**，未设置时为 `https://gitee.com/wik20/memok-ai-openclaw.git`）
 - `MEMOK_REPO_URL_FALLBACK`（回退仓库，默认 **GitHub**；国内安装脚本在主源失败时使用）
 - `MEMOK_REPO_URL`（**Windows** `install-windows.ps1`：若设置则用于 `git clone`，中文版说明中设为 Gitee）
 - `MEMOK_NPM_REGISTRY`（默认 `https://registry.npmmirror.com`；国内安装脚本）
@@ -135,13 +137,13 @@ openclaw memok setup
 手动安装备用方案：
 
 ```bash
-git clone https://gitee.com/wik20/memok-ai.git
-cd memok-ai
+git clone https://gitee.com/wik20/memok-ai-openclaw.git
+cd memok-ai-openclaw
 openclaw plugins install .
 openclaw memok setup
 ```
 
-（需要 GitHub 上游时：`git clone https://github.com/galaxy8691/memok-ai.git`。）
+（需要 GitHub 上游时：`git clone https://github.com/galaxy8691/memok-ai-openclaw.git`。）
 
 向导可配置：
 

@@ -1,9 +1,11 @@
 # memok-ai
 
-English | [简体中文](./README.zh-CN.md) · Website: [memok-ai.com](https://www.memok-ai.com/) · Mirror (中文文档 / 境内安装): [Gitee](https://gitee.com/wik20/memok-ai)
+English | [简体中文](./README.zh-CN.md) · Website: [memok-ai.com](https://www.memok-ai.com/) · Mirror (中文文档 / 境内安装): [Gitee](https://gitee.com/wik20/memok-ai-openclaw)
 
 `memok-ai` is a Node.js + TypeScript memory pipeline for long text and conversations.
 It extracts structured memory units with OpenAI-compatible LLM APIs and stores them in SQLite for recall, reinforcement, and dreaming workflows.
+
+**This repository** is the **OpenClaw plugin** distribution ([GitHub](https://github.com/galaxy8691/memok-ai-openclaw), [Gitee mirror](https://gitee.com/wik20/memok-ai-openclaw)). A separate **memok core / CLI-only** project may live elsewhere; install URLs in this repo point here.
 
 ## What It Does
 
@@ -71,17 +73,17 @@ Install via script (recommended):
 
 ```bash
 # Linux / macOS
-bash <(curl -fsSL https://raw.githubusercontent.com/galaxy8691/memok-ai/main/scripts/install-linux-macos.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/galaxy8691/memok-ai-openclaw/main/scripts/install-linux-macos.sh)
 ```
 
 ```powershell
 # Windows PowerShell
-irm https://raw.githubusercontent.com/galaxy8691/memok-ai/main/scripts/install-windows.ps1 | iex
+irm https://raw.githubusercontent.com/galaxy8691/memok-ai-openclaw/main/scripts/install-windows.ps1 | iex
 ```
 
 ```cmd
 :: Windows CMD (download then run)
-curl -L -o install-windows.cmd https://raw.githubusercontent.com/galaxy8691/memok-ai/main/scripts/install-windows.cmd
+curl -L -o install-windows.cmd https://raw.githubusercontent.com/galaxy8691/memok-ai-openclaw/main/scripts/install-windows.cmd
 install-windows.cmd
 ```
 
@@ -111,8 +113,8 @@ openclaw memok setup
 Manual fallback:
 
 ```bash
-git clone https://github.com/galaxy8691/memok-ai.git
-openclaw plugins install ./memok-ai
+git clone https://github.com/galaxy8691/memok-ai-openclaw.git
+openclaw plugins install ./memok-ai-openclaw
 openclaw memok setup
 ```
 

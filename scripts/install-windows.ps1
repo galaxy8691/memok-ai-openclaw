@@ -1,5 +1,5 @@
 Param(
-  [string]$RepoUrl = "https://github.com/galaxy8691/memok-ai.git",
+  [string]$RepoUrl = "https://github.com/galaxy8691/memok-ai-openclaw.git",
   [string]$TargetDir = "$env:USERPROFILE\.openclaw\extensions\memok-ai-src"
 )
 

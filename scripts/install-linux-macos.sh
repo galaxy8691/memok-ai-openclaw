@@ -5,7 +5,7 @@ if [ -r /dev/tty ]; then
   exec < /dev/tty || true
 fi
 
-REPO_URL="${MEMOK_REPO_URL:-https://github.com/galaxy8691/memok-ai.git}"
+REPO_URL="${MEMOK_REPO_URL:-https://github.com/galaxy8691/memok-ai-openclaw.git}"
 TARGET_DIR="${MEMOK_INSTALL_DIR:-$HOME/.openclaw/extensions/memok-ai-src}"
 
 run_with_timeout() {
