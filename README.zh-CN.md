@@ -6,7 +6,7 @@
 
 **双远端推送（示例）：** `git remote add gitee https://gitee.com/wik20/memok-ai-openclaw.git`（若尚未添加），之后与 GitHub 相同分支一并推送即可，例如 `git push origin main` 与 `git push gitee main`（将 `origin` / `gitee` 换成你的 remote 名）。Gitee 与 GitHub 可保持同一分支内容；仅首页展示语言通过上述 README 设置区分。
 
-本 npm 包（`name: memok-ai`）仅为 **OpenClaw 网关插件**。记忆引擎（文章流水线、SQLite、dreaming、`memok-ai` CLI）在 **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)**，在本仓以依赖 **`memok-ai-core`** 安装（默认 `github:galaxy8691/memok-ai#v1.1.0`；含 `prepare` 会执行 `npm run build`，首次安装会编译 **`better-sqlite3`**）。
+本 npm 包（`name: memok-ai`）仅为 **OpenClaw 网关插件**。记忆引擎（文章流水线、SQLite、dreaming、`memok-ai` CLI）在 **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)**，在本仓以依赖 **`memok-ai-core`** 安装（`git+https://github.com/galaxy8691/memok-ai.git#v1.1.0`；含 `prepare` 会执行 `npm run build`，首次安装会编译 **`better-sqlite3`**）。`package-lock.json` 使用 HTTPS 解析，便于 CI/无 SSH 环境拉取。
 
 **本仓库**（[GitHub](https://github.com/galaxy8691/memok-ai-openclaw)、[Gitee 镜像](https://gitee.com/wik20/memok-ai-openclaw)）只含薄插件源码（`src/plugin.ts`、`openclaw.plugin.json`、skills）。文档里的 `git clone` / raw 脚本默认指向 **memok-ai-openclaw**。
 
