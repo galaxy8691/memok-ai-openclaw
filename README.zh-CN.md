@@ -8,7 +8,7 @@
 
 `memok-ai` 是一个基于 Node.js + TypeScript 的记忆流水线项目，用 OpenAI 兼容接口提取长文/对话记忆并写入 SQLite，支持召回、强化和 dreaming 流程。
 
-**本仓库**为 **OpenClaw 插件**发行树（[GitHub](https://github.com/galaxy8691/memok-ai-openclaw)、[Gitee 镜像](https://gitee.com/wik20/memok-ai-openclaw)）。若将「纯 memok 核心 / 仅 CLI」另立仓库，可与本插件仓并行维护；本文档与安装脚本中的克隆地址均指向当前插件仓库。
+**本仓库**为 **OpenClaw 插件**发行树（[GitHub](https://github.com/galaxy8691/memok-ai-openclaw)、[Gitee 镜像](https://gitee.com/wik20/memok-ai-openclaw)）。**memok 核心仓**（管线、CLI、不依赖 OpenClaw 的日常开发入口）在 **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)**；**本仓**文档与安装脚本里的 `git clone` / raw 脚本地址默认指向 **memok-ai-openclaw**（插件树）。
 
 ## 功能概览
 
