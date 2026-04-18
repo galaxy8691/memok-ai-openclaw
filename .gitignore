@@ -1,0 +1,6 @@
+node_modules/
+memok.sqlite
+memok.sqlite.clean
+test-db/
+.env
+.env.*
