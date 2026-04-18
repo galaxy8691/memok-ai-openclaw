@@ -11,36 +11,45 @@ This repository is the **OpenClaw gateway extension** for Memok memory. The npm 
 
 ## Install (OpenClaw plugin)
 
-Recommended: run an installer from **`scripts/`** (Linux and macOS share one Bash script each; Windows uses PowerShell).
+**One-line install:** paste into a terminal. **`curl -fsSL`** downloads the script from the raw URL; **`bash <(...)`** runs it in one step (process substitution—no separate “save file then chmod” step). You need **`git`**, **`node`**, **`npm`**, and **`openclaw`** already on your `PATH`.
 
-### Linux and macOS
+### Linux / macOS — default (GitHub for `memok-ai-core`)
 
-| Script in repo | Use when | One-liner |
-| --- | --- | --- |
-| **[`scripts/install-linux-macos.sh`](scripts/install-linux-macos.sh)** | Default: GitHub-friendly network; **`memok-ai-core`** from GitHub per `package.json` | `bash <(curl -fsSL https://raw.githubusercontent.com/galaxy8691/memok-ai-openclaw/main/scripts/install-linux-macos.sh)` |
-| **[`scripts/install-cn-linux-macos.sh`](scripts/install-cn-linux-macos.sh)** | Mainland China: Gitee-first clone, **`npm pkg set`** core to Gitee before `npm install`, default npmmirror | `bash <(curl -fsSL https://gitee.com/wik20/memok-ai-openclaw/raw/main/scripts/install-cn-linux-macos.sh)` |
-
-**Do not** clone the **plugin** only from Gitee and run **`install-linux-macos.sh`** without patching core: that script still resolves **`memok-ai-core`** from **GitHub** unless you set **`MEMOK_CORE_GIT_URL`**. Prefer **`install-cn-linux-macos.sh`**, or export **`MEMOK_CORE_GIT_URL`**=`https://gitee.com/wik20/memok-ai.git` (optional **`MEMOK_CORE_GIT_REF`**=`v1.1.0`) before **`install-linux-macos.sh`**.
-
-If you already cloned this repo locally, from the repo root:
+[`scripts/install-linux-macos.sh`](scripts/install-linux-macos.sh)
 
 ```bash
-bash scripts/install-linux-macos.sh          # default / GitHub core
+bash <(curl -fsSL https://raw.githubusercontent.com/galaxy8691/memok-ai-openclaw/main/scripts/install-linux-macos.sh)
+```
+
+### Linux / macOS — mainland China (Gitee + npm mirror)
+
+[`scripts/install-cn-linux-macos.sh`](scripts/install-cn-linux-macos.sh) — clones plugin from Gitee when possible, runs **`npm pkg set`** so **`memok-ai-core`** comes from Gitee before **`npm install`**.
+
+```bash
+bash <(curl -fsSL https://gitee.com/wik20/memok-ai-openclaw/raw/main/scripts/install-cn-linux-macos.sh)
+```
+
+**Do not** use the **default** one-liner above if you only have Gitee access for the **core** dependency: that installer still pulls **`memok-ai-core`** from **GitHub** unless you set **`MEMOK_CORE_GIT_URL`**. Use the **China** line, or export **`MEMOK_CORE_GIT_URL`**=`https://gitee.com/wik20/memok-ai.git` (optional **`MEMOK_CORE_GIT_REF`**=`v1.1.0`) before running **`install-linux-macos.sh`**.
+
+If you already cloned this repo:
+
+```bash
+bash scripts/install-linux-macos.sh          # from repo root — same as curl one-liner
 # or
-bash scripts/install-cn-linux-macos.sh       # China / Gitee core + mirror
+bash scripts/install-cn-linux-macos.sh
 ```
 
 ### Windows
 
-Script: **[`scripts/install-windows.ps1`](scripts/install-windows.ps1)**.
+[`scripts/install-windows.ps1`](scripts/install-windows.ps1) — **`irm`** downloads the script; **`| iex`** runs it.
 
-GitHub clone (default core):
+**Default (GitHub raw + GitHub core):**
 
 ```powershell
 irm https://raw.githubusercontent.com/galaxy8691/memok-ai-openclaw/main/scripts/install-windows.ps1 | iex
 ```
 
-Gitee clone URL + automatic Gitee core:
+**Clone plugin from Gitee and patch core to Gitee:**
 
 ```powershell
 $env:MEMOK_REPO_URL = "https://gitee.com/wik20/memok-ai-openclaw.git"
@@ -80,10 +89,10 @@ openclaw memok setup
 
 ## Core vs plugin (repos)
 
-| | Repository | Role |
-| --- | --- | --- |
-| **Core** | [galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai) · [Gitee mirror](https://gitee.com/wik20/memok-ai) | Pipelines, CLI, tests; dependency **`memok-ai-core`**, import **`memok-ai-core/openclaw-bridge`**. |
-| **Plugin (this repo)** | [galaxy8691/memok-ai-openclaw](https://github.com/galaxy8691/memok-ai-openclaw) · [Gitee mirror](https://gitee.com/wik20/memok-ai-openclaw) | `src/plugin.ts`, `openclaw.plugin.json`, `skills/` only. |
+|                        | Repository                                                                                                                                  | Role                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **Core**               | [galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai) · [Gitee mirror](https://gitee.com/wik20/memok-ai)                            | Pipelines, CLI, tests; dependency **`memok-ai-core`**, import **`memok-ai-core/openclaw-bridge`**. |
+| **Plugin (this repo)** | [galaxy8691/memok-ai-openclaw](https://github.com/galaxy8691/memok-ai-openclaw) · [Gitee mirror](https://gitee.com/wik20/memok-ai-openclaw) | `src/plugin.ts`, `openclaw.plugin.json`, `skills/` only.                                           |
 
 **Single `package.json`:** `memok-ai-core` defaults to **`git+https://github.com/galaxy8691/memok-ai.git#v1.1.0`** (tag **`v1.1.0`** on that host). First `npm install` runs the core package’s **`prepare`** → `npm run build` (includes native **`better-sqlite3`**, often **minutes** on a cold cache).
 
@@ -115,11 +124,11 @@ npm install
 
 ### Compared to embedding-only stacks
 
-| | Memok | Typical hosted vector DB |
-| --- | --- | --- |
-| Deployment | Local SQLite | Cloud API + billing |
-| Recall | Word graph, weights, sampling | Embedding similarity |
-| Explainability | Inspectable rows | Mostly scores |
+|                | Memok                         | Typical hosted vector DB |
+| -------------- | ----------------------------- | ------------------------ |
+| Deployment     | Local SQLite                  | Cloud API + billing      |
+| Recall         | Word graph, weights, sampling | Embedding similarity     |
+| Explainability | Inspectable rows              | Mostly scores            |
 
 ### Notes from real use
 
@@ -135,9 +144,9 @@ When dreaming cron runs, each run is stored in SQLite **`dream_logs`**: `dream_d
 
 ## Config priority (`OPENAI_*`, `MEMOK_LLM_MODEL`)
 
-1. Existing environment variables win  
-2. Plugin config fills gaps only  
-3. `.env` is for **core** CLI dev in [memok-ai](https://github.com/galaxy8691/memok-ai)  
+1. Existing environment variables win
+2. Plugin config fills gaps only
+3. `.env` is for **core** CLI dev in [memok-ai](https://github.com/galaxy8691/memok-ai)
 
 Plugin users normally rely on `openclaw memok setup` only.
 

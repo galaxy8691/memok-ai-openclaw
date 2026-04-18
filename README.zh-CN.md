@@ -13,36 +13,45 @@
 
 ## 安装（OpenClaw 插件）
 
-推荐：使用本仓库 **`scripts/`** 下的安装脚本（**Linux 与 macOS 各对应一个 Bash 脚本**，共用逻辑；Windows 为 PowerShell）。
+**一键安装：** 在终端里整段粘贴执行即可。命令里的 **`curl -fsSL`** 从 raw 地址拉取安装脚本，**`bash <(...)`** 直接交给 bash 运行（进程替换，不必先保存再 `chmod`）。机器上需已安装并能在终端里找到 **`git`**、**`node`**、**`npm`**、**`openclaw`**。
 
-### Linux 与 macOS
+### Linux / macOS — 默认（核心从 GitHub）
 
-| 仓库内脚本 | 适用场景 | 一键命令 |
-| --- | --- | --- |
-| **[`scripts/install-linux-macos.sh`](scripts/install-linux-macos.sh)** | 默认：网络便于访问 GitHub；**`memok-ai-core`** 按 `package.json` 从 **GitHub** 拉取 | `bash <(curl -fsSL https://raw.githubusercontent.com/galaxy8691/memok-ai-openclaw/main/scripts/install-linux-macos.sh)` |
-| **[`scripts/install-cn-linux-macos.sh`](scripts/install-cn-linux-macos.sh)** | 中国大陆：优先从 **Gitee** 克隆插件、在 **`npm install` 前** 把核心改为 **Gitee**，默认 **npmmirror**  registry | `bash <(curl -fsSL https://gitee.com/wik20/memok-ai-openclaw/raw/main/scripts/install-cn-linux-macos.sh)` |
-
-> **不要**只用 **Gitee** 拉**插件**源码却跑「国际版」**`install-linux-macos.sh`** 且不改核心：该脚本默认仍从 **GitHub** 装 **`memok-ai-core`**。境内请用 **`install-cn-linux-macos.sh`**，或在运行前设置 **`MEMOK_CORE_GIT_URL`**=`https://gitee.com/wik20/memok-ai.git`（可选 **`MEMOK_CORE_GIT_REF`**=`v1.1.0`）。
-
-若已克隆本仓库到本地，在仓库根目录执行：
+对应仓库脚本：[**`scripts/install-linux-macos.sh`**](scripts/install-linux-macos.sh)
 
 ```bash
-bash scripts/install-linux-macos.sh          # 默认 / GitHub 核心
+bash <(curl -fsSL https://raw.githubusercontent.com/galaxy8691/memok-ai-openclaw/main/scripts/install-linux-macos.sh)
+```
+
+### Linux / macOS — 中国大陆（Gitee + npmmirror）
+
+对应仓库脚本：[**`scripts/install-cn-linux-macos.sh`**](scripts/install-cn-linux-macos.sh)（优先从 Gitee 克隆插件，并在 **`npm install` 前** 把 **`memok-ai-core`** 指到 Gitee。）
+
+```bash
+bash <(curl -fsSL https://gitee.com/wik20/memok-ai-openclaw/raw/main/scripts/install-cn-linux-macos.sh)
+```
+
+> **不要**在只能访问 Gitee 拉**核心**时仍用上面「默认」那条：国际脚本默认仍从 **GitHub** 装 **`memok-ai-core`**，除非事先设置 **`MEMOK_CORE_GIT_URL`**。境内请用 **国内** 那条，或导出 **`MEMOK_CORE_GIT_URL`**=`https://gitee.com/wik20/memok-ai.git`（可选 **`MEMOK_CORE_GIT_REF`**=`v1.1.0`）再跑 **`install-linux-macos.sh`**。
+
+若已克隆本仓库，在仓库根目录等价执行：
+
+```bash
+bash scripts/install-linux-macos.sh
 # 或
-bash scripts/install-cn-linux-macos.sh       # 境内 / Gitee 核心 + 镜像
+bash scripts/install-cn-linux-macos.sh
 ```
 
 ### Windows
 
-脚本：**[`scripts/install-windows.ps1`](scripts/install-windows.ps1)**。
+对应仓库脚本：[**`scripts/install-windows.ps1`**](scripts/install-windows.ps1)（**`irm`** 下载脚本，**`| iex`** 执行。）
 
-**从 GitHub 拉安装脚本（默认核心）：**
+**默认（从 GitHub raw 拉脚本 + 核心走 GitHub）：**
 
 ```powershell
 irm https://raw.githubusercontent.com/galaxy8691/memok-ai-openclaw/main/scripts/install-windows.ps1 | iex
 ```
 
-**指定 Gitee 克隆插件 URL（并自动改 Gitee 核心）：**
+**从 Gitee 克隆插件并自动把核心改为 Gitee：**
 
 ```powershell
 $env:MEMOK_REPO_URL = "https://gitee.com/wik20/memok-ai-openclaw.git"
@@ -82,10 +91,10 @@ openclaw memok setup
 
 ## 核心与插件（双仓）
 
-| | 仓库 | 职责 |
-| --- | --- | --- |
-| **核心** | [galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai) · [Gitee 镜像](https://gitee.com/wik20/memok-ai) | 管线、CLI、单测；作为依赖 **`memok-ai-core`**，插件通过 **`memok-ai-core/openclaw-bridge`** 调用。 |
-| **插件（本仓）** | [galaxy8691/memok-ai-openclaw](https://github.com/galaxy8691/memok-ai-openclaw) · [Gitee 镜像](https://gitee.com/wik20/memok-ai-openclaw) | 仅 `src/plugin.ts`、`openclaw.plugin.json`、`skills/` 等胶水层。 |
+|                  | 仓库                                                                                                                                      | 职责                                                                                               |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **核心**         | [galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai) · [Gitee 镜像](https://gitee.com/wik20/memok-ai)                            | 管线、CLI、单测；作为依赖 **`memok-ai-core`**，插件通过 **`memok-ai-core/openclaw-bridge`** 调用。 |
+| **插件（本仓）** | [galaxy8691/memok-ai-openclaw](https://github.com/galaxy8691/memok-ai-openclaw) · [Gitee 镜像](https://gitee.com/wik20/memok-ai-openclaw) | 仅 `src/plugin.ts`、`openclaw.plugin.json`、`skills/` 等胶水层。                                   |
 
 **`package.json` 只有一份、不分国内/国际版：** `memok-ai-core` 默认 **`git+https://github.com/galaxy8691/memok-ai.git#v1.1.0`**（对应 tag **`v1.1.0`**，GitHub 与 Gitee 核心仓需保持同名 tag）。首次 **`npm install`** 会执行核心包的 **`prepare`** → `npm run build`（含 **`better-sqlite3`** 原生编译，冷缓存常见 **数分钟**）。
 
@@ -110,18 +119,18 @@ npm install
 
 ## 本插件做什么
 
-- 对话落库、按轮召回、`memok_recall_candidate_memories` / `memok_report_used_memory_ids`、可选发梦定时任务  
-- `openclaw memok setup` 向导与配置写入  
+- 对话落库、按轮召回、`memok_recall_candidate_memories` / `memok_report_used_memory_ids`、可选发梦定时任务
+- `openclaw memok setup` 向导与配置写入
 
 **效果验证（经测试）：** 召回 + 上报流程下，候选记忆在回复中被实际用到的比例**超过 95%**（自测场景）；实际因模型与配置而异。
 
 ### 与「纯向量库」的差异
 
-| | memok | 常见托管向量库 |
-| --- | --- | --- |
-| 部署 | 本机 SQLite | 云端 API |
-| 召回 | 词图、权重、抽样 | 向量相似度 |
-| 可解释性 | 可查表 | 多为分数 |
+|          | memok            | 常见托管向量库 |
+| -------- | ---------------- | -------------- |
+| 部署     | 本机 SQLite      | 云端 API       |
+| 召回     | 词图、权重、抽样 | 向量相似度     |
+| 可解释性 | 可查表           | 多为分数       |
 
 ### 重度使用反馈（非基准）
 
@@ -137,9 +146,9 @@ npm install
 
 ## 配置优先级（`OPENAI_*`、`MEMOK_LLM_MODEL`）
 
-1. 进程环境变量优先  
-2. 插件配置只补缺  
-3. `.env` 主要用于 **核心仓** [memok-ai](https://github.com/galaxy8691/memok-ai) 的 CLI 开发  
+1. 进程环境变量优先
+2. 插件配置只补缺
+3. `.env` 主要用于 **核心仓** [memok-ai](https://github.com/galaxy8691/memok-ai) 的 CLI 开发
 
 纯插件用户一般只需 `openclaw memok setup`。
 
