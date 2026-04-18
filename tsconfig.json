@@ -12,5 +12,9 @@
     "resolveJsonModule": true,
     "declaration": true
   },
-  "include": ["src"]
+  "include": [
+    "src/plugin.ts",
+    "src/plugin/**/*.ts",
+    "src/openclaw-plugin-sdk.d.ts"
+  ]
 }

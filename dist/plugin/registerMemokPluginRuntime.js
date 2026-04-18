@@ -1,28 +1,16 @@
 import { writeFileSync } from "node:fs";
-import { saveTextToMemoryDb } from "../memory/saveTextToMemoryDb.js";
-import { applySentenceUsageFeedback } from "../sqlite/applySentenceUsageFeedback.js";
-import { scrubOpenclawHeartbeatArtifacts } from "../utils/scrubOpenclawHeartbeatArtifacts.js";
-import { stripMemokInjectEchoFromTranscript } from "../utils/stripMemokInjectEchoFromTranscript.js";
+import { applySentenceUsageFeedback, saveTextToMemoryDb, scrubOpenclawHeartbeatArtifacts, stripMemokInjectEchoFromTranscript, } from "memok-ai-core/openclaw-bridge";
 import { cronPatternFromDailyAt, isMemokSetupCliRun } from "./memokTypes.js";
 import { memoryCandidateIdsBySession, RecallCandidateMemoriesParams, ReportUsedMemoryIdsParams, recallAndStoreCandidates, } from "./memoryCandidates.js";
 import { registerDreamingPipelineCron } from "./registerDreamingPipelineCron.js";
 import { clampToLastChars, collectLabeledTurns, INITIAL_TURN_WINDOW, MAX_AGENT_END_CHARS, oneLineSnippet, shortHash, stripFencedCodeBlocks, } from "./transcriptHelpers.js";
 const savedKeys = new Set();
 const sessionProgress = new Map();
-function sessionKeyFromCtx(ctx, fallback = "unknown") {
-    const sk = ctx.sessionKey;
-    const sid = ctx.sessionId;
-    if (typeof sk === "string" && sk)
-        return sk;
-    if (typeof sid === "string" && sid)
-        return sid;
-    return fallback;
-}
 export function registerMemokPluginRuntime(api, ctx) {
     const { pluginCfg, dbPath, memoryInjectEnabled, memoryRecallMode, extractFraction, longTermFraction, maxInjectChars, persistTranscriptToMemory, } = ctx;
     if (pluginCfg.dreamingPipelineScheduleEnabled === true) {
         if (isMemokSetupCliRun()) {
-            api.logger?.info?.("[memok-ai] 检测到 `openclaw memok setup` 交互流程，跳过 dreaming cron 注册以避免 CLI 进程常驻。");
+            api.logger?.info("[memok-ai] 检测到 `openclaw memok setup` 交互流程，跳过 dreaming cron 注册以避免 CLI 进程常驻。");
         }
         else {
             const rawCron = typeof pluginCfg.dreamingPipelineCron === "string" &&
@@ -50,14 +38,11 @@ export function registerMemokPluginRuntime(api, ctx) {
             if (typeof mx === "number" && Number.isFinite(mx)) {
                 pipelineOpts.maxRuns = Math.floor(mx);
             }
-            const tmo = pluginCfg.dreamingPipelineTimeoutMs;
-            const timeoutMs = typeof tmo === "number" && Number.isFinite(tmo) ? Math.floor(tmo) : 0;
             registerDreamingPipelineCron({
                 logger: api.logger ?? {},
                 dbPath,
                 pattern: rawCron,
                 timezone: dreamingTz,
-                timeoutMs,
                 pipelineOpts: Object.keys(pipelineOpts).length > 0 ? pipelineOpts : undefined,
             });
         }
@@ -85,38 +70,37 @@ export function registerMemokPluginRuntime(api, ctx) {
         catch {
             // ignore debug dump failures
         }
-        api.logger?.info?.(`[memok-ai] 输入调试 (${source}): len=${stripped.length}, file=${debugFile}, prefix=${JSON.stringify(oneLineSnippet(stripped.slice(0, 500), 260))}, suffix=${JSON.stringify(oneLineSnippet(stripped.slice(-500), 260))}`);
-        api.logger?.info?.(`[memok-ai] 记忆管线开始 (${source})…`);
+        api.logger?.info(`[memok-ai] 输入调试 (${source}): len=${stripped.length}, file=${debugFile}, prefix=${JSON.stringify(oneLineSnippet(stripped.slice(0, 500), 260))}, suffix=${JSON.stringify(oneLineSnippet(stripped.slice(-500), 260))}`);
+        api.logger?.info(`[memok-ai] 记忆管线开始 (${source})…`);
         try {
             await saveTextToMemoryDb(stripped, { dbPath });
-            api.logger?.info?.(`[memok-ai] 记忆已保存 (${source})`);
+            api.logger?.info(`[memok-ai] 记忆已保存 (${source})`);
         }
         catch (error) {
             const msg = error instanceof Error ? error.message : String(error);
-            api.logger?.error?.(`[memok-ai] 保存记忆失败 (${source}): ${msg}; input_file=${debugFile}; input_len=${stripped.length}`);
+            api.logger?.error(`[memok-ai] 保存记忆失败 (${source}): ${msg}; input_file=${debugFile}; input_len=${stripped.length}`);
             savedKeys.delete(dedupeKey);
         }
     };
     if (memoryInjectEnabled) {
         api.on("before_prompt_build", (_event, ctx) => {
             try {
-                const c = ctx;
-                const sessionMemKey = sessionKeyFromCtx(c, "unknown");
+                const sessionMemKey = ctx.sessionKey ?? ctx.sessionId ?? "unknown";
                 if (memoryRecallMode === "prepend") {
                     const r = recallAndStoreCandidates(dbPath, extractFraction, longTermFraction, maxInjectChars, sessionMemKey);
                     if (r.kind === "empty") {
                         return;
                     }
                     if (r.truncated) {
-                        api.logger?.info?.(`[memok-ai] 记忆注入已截断: session=${sessionMemKey}, ids=${r.ids.length}, maxInjectChars=${maxInjectChars}`);
+                        api.logger?.info(`[memok-ai] 记忆注入已截断: session=${sessionMemKey}, ids=${r.ids.length}, maxInjectChars=${maxInjectChars}`);
                     }
-                    api.logger?.info?.(`[memok-ai] before_prompt_build: prependContext chars=${r.text.length} session=${sessionMemKey}`);
+                    api.logger?.info(`[memok-ai] before_prompt_build: prependContext chars=${r.text.length} session=${sessionMemKey}`);
                     return { prependContext: r.text };
                 }
                 const useSkillHint = memoryRecallMode === "skill+hint";
                 const r = recallAndStoreCandidates(dbPath, extractFraction, longTermFraction, maxInjectChars, sessionMemKey);
                 if (r.kind === "empty") {
-                    api.logger?.info?.(`[memok-ai] before_prompt_build: ${memoryRecallMode} 本轮无候选 session=${sessionMemKey}`);
+                    api.logger?.info(`[memok-ai] before_prompt_build: ${memoryRecallMode} 本轮无候选 session=${sessionMemKey}`);
                     if (useSkillHint) {
                         return {
                             prependContext: "（memok）本轮未抽到候选记忆句；若需再试可调工具 memok_recall_candidate_memories。",
@@ -125,11 +109,11 @@ export function registerMemokPluginRuntime(api, ctx) {
                     return;
                 }
                 if (r.truncated) {
-                    api.logger?.info?.(`[memok-ai] ${memoryRecallMode} 系统上下文注入已截断: session=${sessionMemKey}, ids=${r.ids.length}, maxInjectChars=${maxInjectChars}`);
+                    api.logger?.info(`[memok-ai] ${memoryRecallMode} 系统上下文注入已截断: session=${sessionMemKey}, ids=${r.ids.length}, maxInjectChars=${maxInjectChars}`);
                 }
                 const skillLead = "（memok）以下为每轮自动附带的候选记忆（系统上下文，非用户消息区 prepend）。请遵循技能 memok-memory 阅读定界块内条目并自行判断是否采用；采用后请调用 memok_report_used_memory_ids 上报 id。\n\n";
                 const appendSystemContext = `${skillLead}${r.text}`;
-                api.logger?.info?.(`[memok-ai] before_prompt_build: appendSystemContext recall chars=${appendSystemContext.length} session=${sessionMemKey}${useSkillHint ? " +prependHint" : ""}`);
+                api.logger?.info(`[memok-ai] before_prompt_build: appendSystemContext recall chars=${appendSystemContext.length} session=${sessionMemKey}${useSkillHint ? " +prependHint" : ""}`);
                 if (useSkillHint) {
                     return {
                         appendSystemContext,
@@ -155,7 +139,7 @@ export function registerMemokPluginRuntime(api, ctx) {
                 description: recallDescription,
                 parameters: RecallCandidateMemoriesParams,
                 async execute(_toolCallId, _params) {
-                    const sessionMemKey = sessionKeyFromCtx(toolCtx);
+                    const sessionMemKey = toolCtx.sessionKey ?? toolCtx.sessionId ?? "unknown";
                     try {
                         const r = recallAndStoreCandidates(dbPath, extractFraction, longTermFraction, maxInjectChars, sessionMemKey);
                         if (r.kind === "empty") {
@@ -170,7 +154,7 @@ export function registerMemokPluginRuntime(api, ctx) {
                             };
                         }
                         if (r.truncated) {
-                            api.logger?.info?.(`[memok-ai] 工具召回已截断: session=${sessionMemKey}, ids=${r.ids.length}, maxInjectChars=${maxInjectChars}`);
+                            api.logger?.info(`[memok-ai] 工具召回已截断: session=${sessionMemKey}, ids=${r.ids.length}, maxInjectChars=${maxInjectChars}`);
                         }
                         return {
                             content: [{ type: "text", text: r.text }],
@@ -188,7 +172,7 @@ export function registerMemokPluginRuntime(api, ctx) {
                 },
             };
         }, { name: "memok_recall_candidate_memories" });
-        api.logger?.info?.(`[memok-ai] 已注册工具 memok_recall_candidate_memories（memoryRecallMode=${memoryRecallMode}）`);
+        api.logger?.info(`[memok-ai] 已注册工具 memok_recall_candidate_memories（memoryRecallMode=${memoryRecallMode}）`);
     }
     if (memoryInjectEnabled) {
         api.registerTool((toolCtx) => {
@@ -205,7 +189,7 @@ export function registerMemokPluginRuntime(api, ctx) {
                     const sentenceIds = Array.isArray(raw)
                         ? raw.filter((n) => typeof n === "number" && Number.isInteger(n) && n > 0)
                         : [];
-                    const sessionMemKey = sessionKeyFromCtx(toolCtx);
+                    const sessionMemKey = toolCtx.sessionKey ?? toolCtx.sessionId ?? "unknown";
                     const candidate = memoryCandidateIdsBySession.get(sessionMemKey);
                     const roundIds = candidate?.ids;
                     const hasRoundCandidates = (roundIds?.length ?? 0) > 0;
@@ -226,7 +210,7 @@ export function registerMemokPluginRuntime(api, ctx) {
                         }
                         catch (error) {
                             const msg = error instanceof Error ? error.message : String(error);
-                            api.logger?.error?.(`[memok-ai] 记忆反馈写库失败: ${msg}`);
+                            api.logger?.error(`[memok-ai] 记忆反馈写库失败: ${msg}`);
                             return {
                                 content: [
                                     {
@@ -255,19 +239,17 @@ export function registerMemokPluginRuntime(api, ctx) {
                 },
             };
         }, { name: "memok_report_used_memory_ids" });
-        api.logger?.info?.("[memok-ai] 已注册工具 memok_report_used_memory_ids");
+        api.logger?.info("[memok-ai] 已注册工具 memok_report_used_memory_ids");
     }
     api.on("agent_end", (event, hookCtx) => {
-        const ev = event;
-        const hx = hookCtx;
-        if (ev.success !== true) {
+        if (!event.success) {
             return;
         }
-        const turns = collectLabeledTurns(Array.isArray(ev.messages) ? ev.messages : []);
+        const turns = collectLabeledTurns(event.messages ?? []);
         if (turns.length === 0) {
             return;
         }
-        const sessionId = sessionKeyFromCtx(hx, "nosession");
+        const sessionId = hookCtx.sessionKey ?? hookCtx.sessionId ?? "nosession";
         const state = sessionProgress.get(sessionId);
         let startIdx = 0;
         if (!state) {
@@ -283,7 +265,7 @@ export function registerMemokPluginRuntime(api, ctx) {
             }
             else {
                 startIdx = Math.max(0, turns.length - INITIAL_TURN_WINDOW);
-                api.logger?.info?.(`[memok-ai] 会话历史发生重写，回退窗口模式: session=${sessionId}, turns=${turns.length}, lastCount=${state.lastCount}`);
+                api.logger?.info(`[memok-ai] 会话历史发生重写，回退窗口模式: session=${sessionId}, turns=${turns.length}, lastCount=${state.lastCount}`);
             }
         }
         const delta = turns.slice(startIdx).join("\n\n");
@@ -300,19 +282,14 @@ export function registerMemokPluginRuntime(api, ctx) {
         void runSave(dedupeKey, transcript, "agent_end");
     });
     api.on("message_sent", (event, hookCtx) => {
-        const ev = event;
-        const hx = hookCtx;
-        if (ev.success !== true) {
+        if (!event.success) {
             return;
         }
-        const rawContent = ev.content;
-        const content = typeof rawContent === "string" ? rawContent.trim() : "";
+        const content = event.content?.trim() ?? "";
         if (!content) {
             return;
         }
-        const conv = typeof hx.conversationId === "string" ? hx.conversationId : undefined;
-        const to = typeof ev.to === "string" ? ev.to : "";
-        const dedupeKey = `ms:${conv ?? to}:${content.slice(0, 280)}`;
+        const dedupeKey = `ms:${hookCtx.conversationId ?? event.to}:${content.slice(0, 280)}`;
         void runSave(dedupeKey, `OpenClaw:\n${content}`, "message_sent");
     });
 }

@@ -22,11 +22,6 @@ export interface MemokConfig extends MemokLlmEnvConfig {
     dreamingPipelineFraction?: number;
     dreamingPipelineMinRuns?: number;
     dreamingPipelineMaxRuns?: number;
-    /**
-     * 定时 dreaming 整段 `runDreamingPipelineFromDb` 的最大耗时（毫秒）。
-     * 未设置或 `<= 0` 时不做编排层超时（仍受单次 HTTP 客户端默认限制）。
-     */
-    dreamingPipelineTimeoutMs?: number;
 }
 /** 网关 `plugins.entries.memok-ai`：顶层 `enabled`，选项在 `config` */
 export interface MemokPluginEntry {

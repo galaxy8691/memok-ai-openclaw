@@ -1,9 +1,9 @@
 import { Cron } from "croner";
 import {
+  openSqlite,
   type RunDreamingPipelineFromDbOpts,
   runDreamingPipelineFromDb,
-} from "../dreaming-pipeline/runDreamingPipelineFromDb.js";
-import { openSqlite } from "../sqlite/openSqlite.js";
+} from "memok-ai-core/openclaw-bridge";
 
 export type PluginLoggerLike = {
   info?: (msg: string) => void;

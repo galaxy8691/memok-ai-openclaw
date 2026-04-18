@@ -1,14 +1,15 @@
-# Contributing to memok-ai
+# Contributing to memok-ai (OpenClaw plugin repo)
 
 Thanks for contributing.
 
+This tree is the **OpenClaw extension** only. Memory pipelines, SQLite, dreaming, and the `memok-ai` CLI live in **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)** and are consumed here as **`memok-ai-core`** (see `package.json` → `openclaw-bridge` in that repo).
+
 ## Development Setup
 
-- Node.js **≥20** (LTS recommended); OpenClaw gateway **≥2026.3.24** when developing the plugin (see `openclaw.compat` in [package.json](package.json)).
+- Node.js **≥20** (LTS recommended); OpenClaw gateway **≥2026.3.24** when exercising the plugin (see `openclaw.compat` in [package.json](package.json)).
 
 ```bash
 npm install
-cp .env.example .env
 ```
 
 Useful commands:
@@ -17,15 +18,14 @@ Useful commands:
 npm run lint
 npm run build
 npm test
-npm run dev -- --help
 ```
 
-Formatting and linting use [Biome](https://biomejs.dev/) (`biome.json` at repo root). CI runs `npm run lint` before build.
+Formatting and linting use [Biome](https://biomejs.dev/) (`biome.json` at repo root). CI runs `npm run ci` (lint, build, test).
 
 ## Security and dependencies
 
 - Run `npm audit` periodically; review `npm audit fix` output before applying (semver and breaking changes).
-- [Dependabot](https://docs.github.com/en/code-security/dependabot) opens weekly npm update PRs (see [.github/dependabot.yml](.github/dependabot.yml)).
+- Bumping **`memok-ai-core`**: edit the git tag/commit in [package.json](package.json), run `npm install`, verify `npm run ci`, then commit `package.json` and `package-lock.json`.
 
 ## Pull Request Checklist
 
@@ -40,7 +40,7 @@ Before opening a PR:
 
 ## SQLite connections
 
-Production code opens on-disk databases via [`src/sqlite/openSqlite.ts`](src/sqlite/openSqlite.ts), which sets `busy_timeout` and WAL (`journal_mode`) to reduce lock contention under concurrent gateway or cron use. Tests may still use `better-sqlite3` in-memory databases directly.
+On-disk DB access is implemented in **`memok-ai-core`** (see `openSqlite` in the core repo). This plugin repo does not ship SQLite helpers.
 
 ## Code Style
 

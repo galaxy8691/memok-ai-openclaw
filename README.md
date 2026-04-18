@@ -2,18 +2,15 @@
 
 English | [简体中文](./README.zh-CN.md) · Website: [memok-ai.com](https://www.memok-ai.com/) · Mirror (中文文档 / 境内安装): [Gitee](https://gitee.com/wik20/memok-ai-openclaw)
 
-`memok-ai` is a Node.js + TypeScript memory pipeline for long text and conversations.
-It extracts structured memory units with OpenAI-compatible LLM APIs and stores them in SQLite for recall, reinforcement, and dreaming workflows.
+This **npm package** (`name: memok-ai`) is the **OpenClaw gateway extension** only. The memory engine (article pipeline, SQLite import, dreaming, CLI) lives in the core repo **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)** and is installed here as the dependency **`memok-ai-core`** (Git tag `v1.1.0` by default; includes `prepare` → `npm run build`, so first install compiles native `better-sqlite3`).
 
-**This repository** is the **OpenClaw plugin** distribution ([GitHub](https://github.com/galaxy8691/memok-ai-openclaw), [Gitee mirror](https://gitee.com/wik20/memok-ai-openclaw)). The **memok core** project (pipelines, CLI, day-to-day development without tying to OpenClaw) lives at **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)**. Clone/install URLs **in this repo** point at **memok-ai-openclaw** (the plugin tree).
+**This repository** ([GitHub](https://github.com/galaxy8691/memok-ai-openclaw), [Gitee mirror](https://gitee.com/wik20/memok-ai-openclaw)) holds the thin plugin sources (`src/plugin.ts`, `openclaw.plugin.json`, skills). Clone/install URLs in docs point at **memok-ai-openclaw**.
 
-## What It Does
+## What this plugin repo does
 
-- End-to-end article pipeline (`article-word-pipeline`) that outputs stable JSON tuples
-- SQLite import tools for `words`, `normal_words`, `sentences`, and link tables
-- Dreaming pipeline (`dreaming-pipeline`) that runs `predream` + story-word-sentence loops
-- OpenClaw plugin for incremental conversation persistence and memory recall
-- Interactive plugin setup (`openclaw memok setup`) for provider/model/schedule configuration
+- OpenClaw hooks: transcript persistence, per-turn recall injection, `memok_recall_candidate_memories` / `memok_report_used_memory_ids`, optional dreaming cron
+- Interactive `openclaw memok setup` (wizard) and plugin config wiring
+- **Core behavior** is delegated to `memok-ai-core` via the stable entry **`memok-ai-core/openclaw-bridge`**
 
 **Evaluation (tested):** With the OpenClaw plugin recall/report flow, effective memory utilization (candidate memories that were actually reflected in assistant replies) **exceeded 95%** in our runs. Your results will depend on model, task, and sampling settings.
 
@@ -55,17 +52,15 @@ Install dependencies:
 npm install
 ```
 
-**First-time install note:** `openclaw` is **not** listed in this repo’s npm dependencies (the gateway supplies it at plugin runtime). A cold `npm install` is dominated by **`better-sqlite3`** (native prebuild/compile) plus normal JS deps—often **a few minutes**, depending on network and disk. Avoid `--loglevel verbose` for day-to-day installs (it floods the terminal). The repo `.npmrc` points at **npmmirror** and disables audit calls that Chinese mirrors do not implement. Repeat installs are much faster with a warm npm cache.
+**First-time install note:** `openclaw` is **not** listed here (the gateway supplies it at runtime). `npm install` clones/builds **`memok-ai-core`** from GitHub; that step pulls **`better-sqlite3`** and can take **several minutes** on a cold cache. Avoid `--loglevel verbose` for routine installs. If `.npmrc` is present (e.g. npmmirror), it applies to this install too.
+
+**Air-gapped / GitHub blocked:** clone [memok-ai](https://github.com/galaxy8691/memok-ai) (or your Gitee mirror), run `npm install && npm run build` there, then in this repo set `package.json` dependency to `"memok-ai-core": "file:../memok-ai"` (adjust path) and `npm install`.
 
 ## Installation
 
-### 1) Use as CLI (local development)
+### 1) CLI / article & dreaming pipelines
 
-```bash
-cp .env.example .env
-npm run build
-npm run dev -- --help
-```
+Use the **core** repository: [galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai) (`memok-ai` CLI, `npm run dev -- …`, tests, CI).
 
 ### 2) Use as OpenClaw plugin
 
@@ -114,7 +109,10 @@ Manual fallback:
 
 ```bash
 git clone https://github.com/galaxy8691/memok-ai-openclaw.git
-openclaw plugins install ./memok-ai-openclaw
+cd memok-ai-openclaw
+npm install
+npm run build
+openclaw plugins install .
 openclaw memok setup
 ```
 
@@ -126,58 +124,11 @@ The setup wizard lets you configure:
 
 If you change plugins or config outside the installer, restart the gateway so the running process picks them up (for example `openclaw gateway restart`).
 
-## CLI reference
+## CLI / pipelines / one-shot dreaming
 
-`memok-ai --help` and subcommands use **English** descriptions. For a Chinese walkthrough of each command, see [README.zh-CN.md](./README.zh-CN.md#命令行参考).
+See the **core** repo [README](https://github.com/galaxy8691/memok-ai/blob/main/README.md) and [README.zh-CN](https://github.com/galaxy8691/memok-ai/blob/main/README.zh-CN.md) (`memok-ai` CLI).
 
-| Command | Purpose |
-| --- | --- |
-| `article-core-words` | Extract core words from an article file |
-| `article-core-words-normalize` | Normalize synonyms from core-words JSON |
-| `article-sentences` | Extract memory-oriented sentences |
-| `article-sentence-core-combine` | Combine sentences + normalized words tuple |
-| `article-word-pipeline` | Full article-word pipeline to tuple JSON |
-| `extract-memory-sentences` | Sample memory sentences from SQLite |
-| `dreaming-pipeline` | Predream + story-word-sentence pipeline |
-| `predream-decay` | Predream decay pass only |
-| `story-word-sentence-buckets` | One full story/word/sentence bucket pass |
-| `story-word-sentence-pipeline` | Multiple bucket passes (random run count) |
-| `harden-db` | Clean links and add indexes |
-| `import-awp-v2-tuple` | Import AWP v2 tuple JSON into SQLite |
-
-## Quick CLI Example
-
-Run one-shot article pipeline:
-
-```bash
-npm run dev -- article-word-pipeline ./articles/article1.txt > out/awp_v2_tuple.json
-```
-
-Import tuple into SQLite:
-
-```bash
-npm run dev -- import-awp-v2-tuple --from-json out/awp_v2_tuple.json --db ./memok.sqlite
-```
-
-Extract sampled memory sentences:
-
-```bash
-npm run dev -- extract-memory-sentences --db ./memok.sqlite
-```
-
-## Dreaming
-
-One-shot merged report:
-
-```bash
-npm run dev -- dreaming-pipeline --db ./memok.sqlite
-```
-
-With custom options:
-
-```bash
-npm run dev -- dreaming-pipeline --db ./memok.sqlite --max-words 10 --fraction 0.2 --min-runs 3 --max-runs 5
-```
+## Dreaming (plugin)
 
 When plugin dreaming cron is enabled, each run is persisted in SQLite table `dream_logs`:
 
@@ -192,7 +143,7 @@ For `OPENAI_API_KEY`, `OPENAI_BASE_URL`, and `MEMOK_LLM_MODEL`:
 
 1. Existing process environment variables win
 2. Plugin config only fills missing values
-3. `.env` is mainly for development/CLI usage
+3. `.env` is mainly for **core** CLI development in [memok-ai](https://github.com/galaxy8691/memok-ai)
 
 So plugin users can rely on `openclaw memok setup` without requiring a local `.env`.
 

@@ -1,11 +1,8 @@
 {
   "name": "memok-ai",
   "version": "1.0.0",
-  "description": "Node/TS implementation of memok v2 pipeline",
-  "main": "dist/index.js",
-  "bin": {
-    "memok-ai": "dist/cli.js"
-  },
+  "description": "OpenClaw gateway extension for memok-ai memory (core library: memok-ai-core)",
+  "main": "dist/plugin.js",
   "type": "module",
   "openclaw": {
     "extensions": [
@@ -21,10 +18,7 @@
     "ci": "npm run lint && npm run build && npm run test",
     "lint": "biome check .",
     "format": "biome format --write .",
-    "dev": "tsx src/cli.ts",
-    "test": "vitest run",
-    "batch": "tsx src/scripts/runArticlesBatch.ts",
-    "import:outputs": "tsx src/scripts/importOutputsToSqlite.ts"
+    "test": "vitest run"
   },
   "keywords": [],
   "author": "",
@@ -37,22 +31,13 @@
   ],
   "dependencies": {
     "@sinclair/typebox": "^0.34.49",
-    "better-sqlite3": "^12.9.0",
-    "commander": "^14.0.3",
     "croner": "^10.0.1",
-    "dotenv": "^17.4.2",
-    "openai": "^6.34.0",
-    "zod": "^4.3.6"
+    "memok-ai-core": "github:galaxy8691/memok-ai#v1.1.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.12",
-    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^25.6.0",
-    "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.4"
-  },
-  "optionalDependencies": {
-    "opusscript": "0.0.8"
   }
 }

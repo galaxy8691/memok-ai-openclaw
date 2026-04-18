@@ -1,21 +1,15 @@
 import { copyFileSync, existsSync } from "node:fs";
+import { loadProjectEnv } from "memok-ai-core/openclaw-bridge";
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
-import { loadProjectEnv } from "./llm/openaiCompat.js";
 import { applyMemokPluginLlmEnv } from "./plugin/applyMemokPluginLlmEnv.js";
 import { expandUserPath, getDefaultDbPath, resolveMemokDbPathFromConfig, } from "./plugin/memokTypes.js";
-import { stopDreamingPipelineCron } from "./plugin/registerDreamingPipelineCron.js";
 import { registerMemokPluginRuntime, } from "./plugin/registerMemokPluginRuntime.js";
 import { mergeMemokSetupToConfig, promptMemokSetupAnswers, } from "./plugin/setupWizard.js";
 export default definePluginEntry({
     id: "memok-ai",
     name: "Memok AI Memory",
     description: "自动保存 OpenClaw 对话到 memok-ai 记忆系统",
-    reload: {
-        hotPrefixes: ["plugins.entries.memok-ai", "plugins.slots.memory"],
-    },
-    register(rawApi) {
-        const api = rawApi;
-        stopDreamingPipelineCron();
+    register(api) {
         api.registerCli(({ program }) => {
             const memok = program
                 .command("memok")
@@ -58,10 +52,7 @@ export default definePluginEntry({
             description: "Show memok setup help",
             acceptsArgs: true,
             handler: async (ctx) => {
-                const rawArgs = ctx.args;
-                const first = (typeof rawArgs === "string" ? rawArgs : String(rawArgs ?? ""))
-                    .trim()
-                    .split(/\s+/)[0] ?? "";
+                const first = (ctx.args ?? "").trim().split(/\s+/)[0] ?? "";
                 if (first === "setup") {
                     return {
                         text: "请在网关终端执行 `openclaw memok setup` 进入交互式向导（供应商/API Key/模型/发梦时间）。",
@@ -72,7 +63,7 @@ export default definePluginEntry({
                 };
             },
         });
-        const entry = api.config?.plugins?.entries?.["memok-ai"];
+        const entry = api.config.plugins?.entries?.["memok-ai"];
         const manifestDefaults = api.pluginConfig && typeof api.pluginConfig === "object"
             ? api.pluginConfig
             : {};
@@ -95,7 +86,7 @@ export default definePluginEntry({
             ...entryConfig,
         };
         if (entry?.enabled === false || pluginCfg.enabled === false) {
-            api.logger?.info?.("[memok-ai] 已禁用（已停止 dreaming 定时任务）");
+            api.logger?.info("[memok-ai] 已禁用");
             return;
         }
         loadProjectEnv();
@@ -104,7 +95,7 @@ export default definePluginEntry({
             (pluginCfg.llmApiKey ?? "").trim() ||
             (pluginCfg.llmModel ?? "").trim() ||
             (pluginCfg.llmModelPreset ?? "").trim()) {
-            api.logger?.info?.("[memok-ai] 已根据插件配置尝试补齐 OPENAI_API_KEY / OPENAI_BASE_URL / MEMOK_LLM_MODEL（不覆盖已存在的环境变量）");
+            api.logger?.info("[memok-ai] 已根据插件配置尝试补齐 OPENAI_API_KEY / OPENAI_BASE_URL / MEMOK_LLM_MODEL（不覆盖已存在的环境变量）");
         }
         const dbPath = expandUserPath(pluginCfg.dbPath || getDefaultDbPath());
         const memoryInjectEnabled = pluginCfg.memoryInjectEnabled !== false;
@@ -122,13 +113,13 @@ export default definePluginEntry({
         const extractFraction = pluginCfg.extractFraction ?? 0.2;
         const longTermFraction = pluginCfg.longTermFraction ?? extractFraction;
         const maxInjectChars = Math.max(512, pluginCfg.maxInjectChars ?? 12_000);
-        api.logger?.info?.(`[memok-ai] 已启用，数据库: ${dbPath}`);
+        api.logger?.info(`[memok-ai] 已启用，数据库: ${dbPath}`);
         if (memoryInjectEnabled) {
-            api.logger?.info?.(`[memok-ai] 记忆召回: mode=${memoryRecallMode}, fraction=${extractFraction}, longTermFraction=${longTermFraction}, maxInjectChars=${maxInjectChars}`);
+            api.logger?.info(`[memok-ai] 记忆召回: mode=${memoryRecallMode}, fraction=${extractFraction}, longTermFraction=${longTermFraction}, maxInjectChars=${maxInjectChars}`);
         }
         const persistTranscriptToMemory = pluginCfg.persistTranscriptToMemory !== false;
         if (pluginCfg.persistTranscriptToMemory === false) {
-            api.logger?.info?.("[memok-ai] persistTranscriptToMemory 已显式关闭，对话不会写入 SQLite（仅注入/工具反馈仍可用）。");
+            api.logger?.info("[memok-ai] persistTranscriptToMemory 已显式关闭，对话不会写入 SQLite（仅注入/工具反馈仍可用）。");
         }
         const runtimeCtx = {
             pluginCfg,

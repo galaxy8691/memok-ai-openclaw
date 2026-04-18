@@ -1,9 +1,11 @@
 import { writeFileSync } from "node:fs";
-import type { RunDreamingPipelineFromDbOpts } from "../dreaming-pipeline/runDreamingPipelineFromDb.js";
-import { saveTextToMemoryDb } from "../memory/saveTextToMemoryDb.js";
-import { applySentenceUsageFeedback } from "../sqlite/applySentenceUsageFeedback.js";
-import { scrubOpenclawHeartbeatArtifacts } from "../utils/scrubOpenclawHeartbeatArtifacts.js";
-import { stripMemokInjectEchoFromTranscript } from "../utils/stripMemokInjectEchoFromTranscript.js";
+import {
+  applySentenceUsageFeedback,
+  type RunDreamingPipelineFromDbOpts,
+  saveTextToMemoryDb,
+  scrubOpenclawHeartbeatArtifacts,
+  stripMemokInjectEchoFromTranscript,
+} from "memok-ai-core/openclaw-bridge";
 import type { MemokConfig } from "./memokTypes.js";
 import { cronPatternFromDailyAt, isMemokSetupCliRun } from "./memokTypes.js";
 import {

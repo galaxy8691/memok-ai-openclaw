@@ -6,17 +6,15 @@
 
 **双远端推送（示例）：** `git remote add gitee https://gitee.com/wik20/memok-ai-openclaw.git`（若尚未添加），之后与 GitHub 相同分支一并推送即可，例如 `git push origin main` 与 `git push gitee main`（将 `origin` / `gitee` 换成你的 remote 名）。Gitee 与 GitHub 可保持同一分支内容；仅首页展示语言通过上述 README 设置区分。
 
-`memok-ai` 是一个基于 Node.js + TypeScript 的记忆流水线项目，用 OpenAI 兼容接口提取长文/对话记忆并写入 SQLite，支持召回、强化和 dreaming 流程。
+本 npm 包（`name: memok-ai`）仅为 **OpenClaw 网关插件**。记忆引擎（文章流水线、SQLite、dreaming、`memok-ai` CLI）在 **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)**，在本仓以依赖 **`memok-ai-core`** 安装（默认 `github:galaxy8691/memok-ai#v1.1.0`；含 `prepare` 会执行 `npm run build`，首次安装会编译 **`better-sqlite3`**）。
 
-**本仓库**为 **OpenClaw 插件**发行树（[GitHub](https://github.com/galaxy8691/memok-ai-openclaw)、[Gitee 镜像](https://gitee.com/wik20/memok-ai-openclaw)）。**memok 核心仓**（管线、CLI、不依赖 OpenClaw 的日常开发入口）在 **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)**；**本仓**文档与安装脚本里的 `git clone` / raw 脚本地址默认指向 **memok-ai-openclaw**（插件树）。
+**本仓库**（[GitHub](https://github.com/galaxy8691/memok-ai-openclaw)、[Gitee 镜像](https://gitee.com/wik20/memok-ai-openclaw)）只含薄插件源码（`src/plugin.ts`、`openclaw.plugin.json`、skills）。文档里的 `git clone` / raw 脚本默认指向 **memok-ai-openclaw**。
 
-## 功能概览
+## 功能概览（本仓）
 
-- 一步式文章流水线（`article-word-pipeline`），输出稳定 JSON 二元组
-- SQLite 导入工具（`words` / `normal_words` / `sentences` 及关联表）
-- dreaming 编排（`dreaming-pipeline` = `predream` + story-word-sentence 多轮）
-- OpenClaw 插件：对话增量落库 + 记忆召回
-- 交互式插件配置（`openclaw memok setup`）
+- OpenClaw 钩子：对话落库、按轮召回、工具 `memok_recall_candidate_memories` / `memok_report_used_memory_ids`、可选发梦定时任务
+- `openclaw memok setup` 交互向导与配置写入
+- 具体记忆管线由 **`memok-ai-core`** 的稳定入口 **`memok-ai-core/openclaw-bridge`** 提供
 
 **效果验证（经测试）：** 在 OpenClaw 插件召回与上报流程下，记忆实用率（候选记忆在助手回复中被实际用到的比例）**超过 95%**（我们自测场景）。实际表现会因模型、任务与抽样参数而有所不同。
 
@@ -60,23 +58,20 @@ npm install
 
 ### 关于首次安装耗时（请先看）
 
-本仓库 **npm 依赖里不声明 `openclaw`**（插件在网关进程里由宿主解析 `openclaw/plugin-sdk/...`）。首次 `npm install` 的耗时主要来自 **`better-sqlite3` 等原生模块**（预编译下载或本地编译）以及其余 JS 依赖，常见 **数分钟级**（视网络与磁盘而定）；若日志长时间停在某个包的 **`install`/`postinstall`**，多为正常编译或下载，不是死机。
+本仓库 **不声明 `openclaw` 依赖**（网关在运行时提供）。`npm install` 会拉取并构建 **`memok-ai-core`**，其中含 **`better-sqlite3`**，冷缓存下常见 **数分钟**；若长时间停在某个包的 `install`/`postinstall`，多为正常编译。
 
 建议：
 
-- **不要用** `--loglevel verbose` 日常安装，否则几千行 `npm http cache` 会像「卡死」。
-- 项目根目录 **`.npmrc`** 已配置 **npmmirror** 并关闭镜像站不支持的 `audit` 请求；**中国大陆**请优先用下文 **`install-cn-linux-macos.sh`**（脚本内也会设国内 npm 源）。
-- **同一台机器、同一 npm 缓存**下第二次安装或后续 `npm ci` 会快很多。
+- **不要用** `--loglevel verbose` 日常安装。
+- 若有 **`.npmrc`**（如 npmmirror），会一并作用于依赖安装；**中国大陆**可优先用 **`install-cn-linux-macos.sh`**（脚本内会设国内 npm 源）。
+
+**无法访问 GitHub 时：** 先克隆 [memok-ai](https://github.com/galaxy8691/memok-ai)（或自建 Gitee 镜像）并在该目录执行 `npm install && npm run build`，再将本仓 `package.json` 中 `memok-ai-core` 改为 `"file:../memok-ai"`（路径按实际调整）后执行 `npm install`。
 
 ## 安装方法
 
-### 1）作为 CLI 本地使用
+### 1）CLI / 文章与 dreaming 管线
 
-```bash
-cp .env.example .env
-npm run build
-npm run dev -- --help
-```
+请使用 **核心仓** [galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)（`memok-ai` CLI、`npm run dev -- …`、单测与 CI）。
 
 ### 2）作为 OpenClaw 插件使用
 
@@ -139,6 +134,8 @@ openclaw memok setup
 ```bash
 git clone https://gitee.com/wik20/memok-ai-openclaw.git
 cd memok-ai-openclaw
+npm install
+npm run build
 openclaw plugins install .
 openclaw memok setup
 ```
@@ -153,52 +150,11 @@ openclaw memok setup
 
 若在安装脚本之外修改插件或配置，请自行重启网关以便运行中的进程加载新配置（例如 `openclaw gateway restart`）。
 
-## 命令行参考
+## 命令行 / 管线 / 一键 Dreaming
 
-`npm run dev -- --help` 与各子命令的 `--help` 为**英文**说明（与代码中 Commander 文案一致）。下表为中文用途速查（示例仍用 `npm run dev --`；安装 CLI 后可改用 `memok-ai`）。
+见 **核心仓** [README.zh-CN](https://github.com/galaxy8691/memok-ai/blob/main/README.zh-CN.md) 与 [README](https://github.com/galaxy8691/memok-ai/blob/main/README.md)（`memok-ai` CLI）。
 
-| 子命令 | 说明 |
-| --- | --- |
-| `article-core-words <文章路径>` | 从文章文本抽取 core words |
-| `article-core-words-normalize` | 读取 core_words JSON，做同义词归一 |
-| `article-sentences <文章路径>` | 抽取面向记忆的句子 |
-| `article-sentence-core-combine` | 合并 sentences 与 normalize 输出为二元组 |
-| `article-word-pipeline <文章路径>` | 一步跑完整 article-word 流水线 |
-| `extract-memory-sentences --db …` | 从 SQLite 按词抽样关联记忆句 |
-| `dreaming-pipeline --db …` | predream 衰减 + story-word-sentence 全流程 |
-| `predream-decay --db …` | 仅 predream（duration 与短期句处理） |
-| `story-word-sentence-buckets --db …` | 单轮完整分桶+回写+清理 |
-| `story-word-sentence-pipeline --db …` | 同一库上多轮 buckets（随机轮数） |
-| `harden-db --db …` | 清理无效/重复 link 并建索引 |
-| `import-awp-v2-tuple --from-json … --db …` | 将 AWP v2 元组 JSON 导入库 |
-
-## 快速示例（CLI）
-
-执行文章流水线：
-
-```bash
-npm run dev -- article-word-pipeline ./articles/article1.txt > out/awp_v2_tuple.json
-```
-
-导入 SQLite：
-
-```bash
-npm run dev -- import-awp-v2-tuple --from-json out/awp_v2_tuple.json --db ./memok.sqlite
-```
-
-抽样记忆句：
-
-```bash
-npm run dev -- extract-memory-sentences --db ./memok.sqlite
-```
-
-## Dreaming
-
-一键运行并输出合并报告：
-
-```bash
-npm run dev -- dreaming-pipeline --db ./memok.sqlite
-```
+## Dreaming（插件侧）
 
 插件定时 dreaming 开启后，每次执行结果会写入 SQLite 的 `dream_logs` 表，字段包括：
 
@@ -213,7 +169,7 @@ npm run dev -- dreaming-pipeline --db ./memok.sqlite
 
 1. 进程已有环境变量优先
 2. 插件配置仅补齐缺失值，不覆盖已有值
-3. `.env` 主要用于本地开发与 CLI 调试
+3. `.env` 主要用于 **核心仓** [memok-ai](https://github.com/galaxy8691/memok-ai) 的 CLI 本地开发
 
 因此纯插件用户可直接用 `openclaw memok setup`，不强制要求本地 `.env`。
 

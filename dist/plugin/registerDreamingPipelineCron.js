@@ -1,26 +1,7 @@
 import { Cron } from "croner";
-import { runDreamingPipelineFromDb, } from "../dreaming-pipeline/runDreamingPipelineFromDb.js";
-import { openSqlite } from "../sqlite/openSqlite.js";
+import { openSqlite, runDreamingPipelineFromDb, } from "memok-ai-core/openclaw-bridge";
 let active;
-/** 为定时 dreaming 编排层超时；单测可 import 校验行为 */
-export function raceDreamingPipelinePromise(promise, timeoutMs, label) {
-    if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
-        return promise;
-    }
-    return new Promise((resolve, reject) => {
-        const t = setTimeout(() => {
-            reject(new Error(`${label} 超过 ${timeoutMs}ms 未结束（可在 plugins.entries.memok-ai.config 调整 dreamingPipelineTimeoutMs，或设为 0 关闭编排超时）`));
-        }, timeoutMs);
-        promise.then((v) => {
-            clearTimeout(t);
-            resolve(v);
-        }, (e) => {
-            clearTimeout(t);
-            reject(e);
-        });
-    });
-}
-/** 停止由本模块注册的定时任务（网关重载 / 插件禁用时请先调用）。 */
+/** 停止由本模块注册的定时任务（例如热重载前可调用；当前插件未单独挂接 reload）。 */
 export function stopDreamingPipelineCron() {
     active?.stop();
     active = undefined;
@@ -31,7 +12,7 @@ export function stopDreamingPipelineCron() {
  */
 export function registerDreamingPipelineCron(params) {
     stopDreamingPipelineCron();
-    const { logger, dbPath, pattern, timezone, pipelineOpts, timeoutMs } = params;
+    const { logger, dbPath, pattern, timezone, pipelineOpts } = params;
     const insertDreamLog = (row) => {
         try {
             const db = openSqlite(dbPath, undefined, (m) => logger.warn?.(m));
@@ -68,10 +49,7 @@ export function registerDreamingPipelineCron(params) {
             const startedAt = new Date().toISOString();
             try {
                 logger.info?.(`[memok-ai] dreaming-pipeline（定时）开始: db=${dbPath}`);
-                if (typeof timeoutMs === "number" && timeoutMs > 0) {
-                    logger.info?.(`[memok-ai] dreaming-pipeline（定时）编排超时: ${timeoutMs}ms`);
-                }
-                const out = await raceDreamingPipelinePromise(runDreamingPipelineFromDb(dbPath, pipelineOpts), timeoutMs ?? 0, "[memok-ai] dreaming-pipeline（定时）");
+                const out = await runDreamingPipelineFromDb(dbPath, pipelineOpts);
                 const p = out.predream;
                 const s = out.storyWordSentencePipeline;
                 logger.info?.(`[memok-ai] dreaming-pipeline（定时）完成: predream(durationDec=${p.sentencesDurationDecremented} promoted=${p.promotedToLongTerm} deleted=${p.deletedSentences}) storyRuns=${s.plannedRuns}`);

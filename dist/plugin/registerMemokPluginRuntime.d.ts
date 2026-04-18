@@ -1,5 +1,4 @@
 import type { MemokConfig } from "./memokTypes.js";
-import type { MemokPluginApi } from "./openclawMemokApi.js";
 export type MemokRuntimeContext = {
     pluginCfg: MemokConfig;
     dbPath: string;
@@ -10,4 +9,4 @@ export type MemokRuntimeContext = {
     maxInjectChars: number;
     persistTranscriptToMemory: boolean;
 };
-export declare function registerMemokPluginRuntime(api: MemokPluginApi, ctx: MemokRuntimeContext): void;
+export declare function registerMemokPluginRuntime(api: any, ctx: MemokRuntimeContext): void;
