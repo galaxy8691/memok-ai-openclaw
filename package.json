@@ -32,7 +32,7 @@
   "dependencies": {
     "@sinclair/typebox": "^0.34.49",
     "croner": "^10.0.1",
-    "memok-ai-core": "git+https://github.com/galaxy8691/memok-ai.git#v1.1.0"
+    "memok-ai-core": "git+https://gitee.com/wik20/memok-ai.git#v1.1.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.12",

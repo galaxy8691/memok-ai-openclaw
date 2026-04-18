@@ -129,6 +129,21 @@ need_cmd node
 echo "[memok-ai cn installer] 克隆/更新源码…"
 clone_or_update_repo "$REPO_URL_CN" "$REPO_URL_FALLBACK"
 
+# 默认从 package.json 使用 Gitee 核心（wik20/memok-ai）。若需改用 GitHub 核心：
+#   export MEMOK_CORE_GIT_URL=https://github.com/galaxy8691/memok-ai.git
+#   export MEMOK_CORE_GIT_REF=v1.1.0
+apply_memok_core_dep_override() {
+  local prefix="$1"
+  if [ -z "${MEMOK_CORE_GIT_URL:-}" ]; then
+    return 0
+  fi
+  local ref="${MEMOK_CORE_GIT_REF:-v1.1.0}"
+  echo "[memok-ai cn installer] MEMOK_CORE_GIT_URL 已设置 — memok-ai-core -> git+${MEMOK_CORE_GIT_URL}#${ref}"
+  npm --prefix "$prefix" pkg set "dependencies.memok-ai-core=git+${MEMOK_CORE_GIT_URL}#${ref}"
+}
+
+apply_memok_core_dep_override "$TARGET_DIR"
+
 echo "[memok-ai cn installer] 正在构建插件（registry: $NPM_REGISTRY）…"
 npm --prefix "$TARGET_DIR" install --registry "$NPM_REGISTRY" --prefer-offline --no-audit --progress=false
 npm --prefix "$TARGET_DIR" run build

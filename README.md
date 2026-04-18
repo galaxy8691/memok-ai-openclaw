@@ -2,7 +2,7 @@
 
 English | [简体中文](./README.zh-CN.md) · Website: [memok-ai.com](https://www.memok-ai.com/) · Mirror (中文文档 / 境内安装): [Gitee](https://gitee.com/wik20/memok-ai-openclaw)
 
-This **npm package** (`name: memok-ai`) is the **OpenClaw gateway extension** only. The memory engine (article pipeline, SQLite import, dreaming, CLI) lives in the core repo **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)** and is installed here as the dependency **`memok-ai-core`** (`git+https://github.com/galaxy8691/memok-ai.git#v1.1.0`; includes `prepare` → `npm run build`, so first install compiles native `better-sqlite3`). `package-lock.json` pins HTTPS so CI/agents work without SSH keys to GitHub.
+This **npm package** (`name: memok-ai`) is the **OpenClaw gateway extension** only. The memory engine (article pipeline, SQLite import, dreaming, CLI) lives in the core repo **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)** (Chinese mirror: **[wik20/memok-ai on Gitee](https://gitee.com/wik20/memok-ai)**) and is installed here as **`memok-ai-core`**, defaulting to **`git+https://gitee.com/wik20/memok-ai.git#v1.1.0`** (same tag as GitHub; includes `prepare` → `npm run build`, so first install compiles native `better-sqlite3`). To pull the core from **GitHub** instead, set `MEMOK_CORE_GIT_URL` before `npm install` (see install scripts) or edit `package.json` / run `npm pkg set dependencies.memok-ai-core=git+https://github.com/galaxy8691/memok-ai.git#v1.1.0`.
 
 **This repository** ([GitHub](https://github.com/galaxy8691/memok-ai-openclaw), [Gitee mirror](https://gitee.com/wik20/memok-ai-openclaw)) holds the thin plugin sources (`src/plugin.ts`, `openclaw.plugin.json`, skills). Clone/install URLs in docs point at **memok-ai-openclaw**.
 
@@ -52,9 +52,11 @@ Install dependencies:
 npm install
 ```
 
-**First-time install note:** `openclaw` is **not** listed here (the gateway supplies it at runtime). `npm install` clones/builds **`memok-ai-core`** from GitHub; that step pulls **`better-sqlite3`** and can take **several minutes** on a cold cache. Avoid `--loglevel verbose` for routine installs. If `.npmrc` is present (e.g. npmmirror), it applies to this install too.
+**First-time install note:** `openclaw` is **not** listed here (the gateway supplies it at runtime). `npm install` clones/builds **`memok-ai-core`** from **Gitee by default**; that step pulls **`better-sqlite3`** and can take **several minutes** on a cold cache. Avoid `--loglevel verbose` for routine installs. If `.npmrc` is present (e.g. npmmirror), it applies to this install too.
 
-**Air-gapped / GitHub blocked:** clone [memok-ai](https://github.com/galaxy8691/memok-ai) (or your Gitee mirror), run `npm install && npm run build` there, then in this repo set `package.json` dependency to `"memok-ai-core": "file:../memok-ai"` (adjust path) and `npm install`.
+**Install scripts (GitHub / Windows default):** if you need the core from GitHub, set `MEMOK_CORE_GIT_URL=https://github.com/galaxy8691/memok-ai.git` (optional `MEMOK_CORE_GIT_REF=v1.1.0`) before the script runs `npm install` — the script will patch `dependencies.memok-ai-core` for that run.
+
+**Air-gapped:** clone core locally, run `npm install && npm run build` there, then set `package.json` to `"memok-ai-core": "file:../memok-ai"` (adjust path) and `npm install`.
 
 ## Installation
 
@@ -96,6 +98,8 @@ Useful installer env vars:
 - `MEMOK_SKIP_GATEWAY_RESTART=1` (skip the final gateway restart step)
 - `MEMOK_GATEWAY_RESTART_TIMEOUT_SECONDS` (default `120`; Bash uses `timeout` when available; PowerShell uses `Start-Process` + `WaitForExit` for the same cap on gateway restart)
 - `MEMOK_KEEP_SOURCE=1` (keep source directory for debugging)
+- `MEMOK_CORE_GIT_URL` (optional; **`package.json` defaults to the Gitee core mirror** `https://gitee.com/wik20/memok-ai.git`. Set this to `https://github.com/galaxy8691/memok-ai.git` before install if you want GitHub instead; install scripts patch `memok-ai-core` before `npm install`)
+- `MEMOK_CORE_GIT_REF` (optional; Git tag/ref for core, default **`v1.1.0`** — must exist on whichever host you use)
 
 If `openclaw plugins install` prints success but never returns (so the installer never reaches the next line), that is usually OpenClaw’s CLI not exiting; on **Linux**, the Bash installer can run the command inside `script` (pseudo-TTY) unless `MEMOK_PLUGINS_INSTALL_NO_PTY=1`. The **PowerShell** installer calls `openclaw` directly (no PTY wrapper). You can `Ctrl+C` and run `openclaw memok setup` if the plugin files are already installed. Avoid registering the same plugin twice (e.g. both `memok-ai` and `memok-ai-src` paths) — remove the duplicate entry in `openclaw.json` to silence “duplicate plugin id” warnings.
 

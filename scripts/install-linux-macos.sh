@@ -103,6 +103,21 @@ else
   git clone --depth=1 "$REPO_URL" "$TARGET_DIR"
 fi
 
+# package.json 默认从 Gitee 拉核心（wik20/memok-ai）。若需 GitHub 上游，在安装前设置：
+#   export MEMOK_CORE_GIT_URL=https://github.com/galaxy8691/memok-ai.git
+#   export MEMOK_CORE_GIT_REF=v1.1.0   # 可选，默认 v1.1.0
+apply_memok_core_dep_override() {
+  local prefix="$1"
+  if [ -z "${MEMOK_CORE_GIT_URL:-}" ]; then
+    return 0
+  fi
+  local ref="${MEMOK_CORE_GIT_REF:-v1.1.0}"
+  echo "[memok-ai installer] MEMOK_CORE_GIT_URL set — memok-ai-core -> git+${MEMOK_CORE_GIT_URL}#${ref}"
+  npm --prefix "$prefix" pkg set "dependencies.memok-ai-core=git+${MEMOK_CORE_GIT_URL}#${ref}"
+}
+
+apply_memok_core_dep_override "$TARGET_DIR"
+
 echo "[memok-ai installer] building plugin dist..."
 npm --prefix "$TARGET_DIR" install
 npm --prefix "$TARGET_DIR" run build
