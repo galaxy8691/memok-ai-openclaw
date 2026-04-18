@@ -120,17 +120,19 @@ if (Test-Path (Join-Path $TargetDir ".git")) {
   git clone --depth=1 $RepoUrl $TargetDir | Out-Host
 }
 
-# package.json defaults to Gitee core (wik20/memok-ai). To use GitHub instead before npm install:
-#   $env:MEMOK_CORE_GIT_URL = "https://github.com/galaxy8691/memok-ai.git"
-#   $env:MEMOK_CORE_GIT_REF = "v1.1.0"   # optional
+# package.json defaults to GitHub core. If plugin was cloned from Gitee, switch core to Gitee before npm install.
+# Override any time with: $env:MEMOK_CORE_GIT_URL = "https://..." ; optional $env:MEMOK_CORE_GIT_REF = "v1.1.0"
+$coreRef = "v1.1.0"
+if ($env:MEMOK_CORE_GIT_REF -and $env:MEMOK_CORE_GIT_REF.Trim().Length -gt 0) {
+  $coreRef = $env:MEMOK_CORE_GIT_REF.Trim()
+}
 if ($env:MEMOK_CORE_GIT_URL -and $env:MEMOK_CORE_GIT_URL.Trim().Length -gt 0) {
-  $coreRef = "v1.1.0"
-  if ($env:MEMOK_CORE_GIT_REF -and $env:MEMOK_CORE_GIT_REF.Trim().Length -gt 0) {
-    $coreRef = $env:MEMOK_CORE_GIT_REF.Trim()
-  }
   $u = $env:MEMOK_CORE_GIT_URL.Trim()
   Write-Host "[memok-ai installer] MEMOK_CORE_GIT_URL set — memok-ai-core -> git+${u}#${coreRef}"
   & npm --prefix $TargetDir pkg set "dependencies.memok-ai-core=git+${u}#${coreRef}" | Out-Host
+} elseif ($RepoUrl -match 'gitee\.com') {
+  Write-Host "[memok-ai installer] Gitee plugin URL — memok-ai-core -> gitee.com/wik20/memok-ai #${coreRef}"
+  & npm --prefix $TargetDir pkg set "dependencies.memok-ai-core=git+https://gitee.com/wik20/memok-ai.git#${coreRef}" | Out-Host
 }
 
 Write-Host "[memok-ai installer] building plugin dist..."

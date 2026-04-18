@@ -129,20 +129,21 @@ need_cmd node
 echo "[memok-ai cn installer] 克隆/更新源码…"
 clone_or_update_repo "$REPO_URL_CN" "$REPO_URL_FALLBACK"
 
-# 默认从 package.json 使用 Gitee 核心（wik20/memok-ai）。若需改用 GitHub 核心：
-#   export MEMOK_CORE_GIT_URL=https://github.com/galaxy8691/memok-ai.git
-#   export MEMOK_CORE_GIT_REF=v1.1.0
-apply_memok_core_dep_override() {
+# 仓库内 package.json 统一为 GitHub 核心源；本脚本在 npm install 前改为 Gitee（境内线路）。
+# 若显式指定 MEMOK_CORE_GIT_URL，则优先使用该 URL（例如仍想从 GitHub 拉核心）。
+patch_memok_core_dependency_cn() {
   local prefix="$1"
-  if [ -z "${MEMOK_CORE_GIT_URL:-}" ]; then
-    return 0
-  fi
   local ref="${MEMOK_CORE_GIT_REF:-v1.1.0}"
-  echo "[memok-ai cn installer] MEMOK_CORE_GIT_URL 已设置 — memok-ai-core -> git+${MEMOK_CORE_GIT_URL}#${ref}"
-  npm --prefix "$prefix" pkg set "dependencies.memok-ai-core=git+${MEMOK_CORE_GIT_URL}#${ref}"
+  if [ -n "${MEMOK_CORE_GIT_URL:-}" ]; then
+    echo "[memok-ai cn installer] MEMOK_CORE_GIT_URL 已设置 — memok-ai-core -> git+${MEMOK_CORE_GIT_URL}#${ref}"
+    npm --prefix "$prefix" pkg set "dependencies.memok-ai-core=git+${MEMOK_CORE_GIT_URL}#${ref}"
+    return
+  fi
+  echo "[memok-ai cn installer] 将 memok-ai-core 切换为 Gitee: wik20/memok-ai (#${ref}) …"
+  npm --prefix "$prefix" pkg set "dependencies.memok-ai-core=git+https://gitee.com/wik20/memok-ai.git#${ref}"
 }
 
-apply_memok_core_dep_override "$TARGET_DIR"
+patch_memok_core_dependency_cn "$TARGET_DIR"
 
 echo "[memok-ai cn installer] 正在构建插件（registry: $NPM_REGISTRY）…"
 npm --prefix "$TARGET_DIR" install --registry "$NPM_REGISTRY" --prefer-offline --no-audit --progress=false

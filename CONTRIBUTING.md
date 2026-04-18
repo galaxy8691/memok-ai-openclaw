@@ -2,7 +2,7 @@
 
 Thanks for contributing.
 
-This tree is the **OpenClaw extension** only. Memory pipelines, SQLite, dreaming, and the `memok-ai` CLI live in **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)** and are consumed here as **`memok-ai-core`** (see `package.json` → `openclaw-bridge` in that repo).
+This tree is the **OpenClaw extension** only. Memory pipelines, SQLite, dreaming, and the `memok-ai` CLI live in **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)** (Gitee mirror: [wik20/memok-ai](https://gitee.com/wik20/memok-ai)) and are consumed here as **`memok-ai-core`**. **`package.json` pins the GitHub URL** for a single canonical lockfile; **`scripts/install-cn-linux-macos.sh`** rewrites `memok-ai-core` to the Gitee URL before `npm install` for China installs.
 
 ## Development Setup
 

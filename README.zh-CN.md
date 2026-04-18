@@ -6,7 +6,7 @@
 
 **双远端推送（示例）：** `git remote add gitee https://gitee.com/wik20/memok-ai-openclaw.git`（若尚未添加），之后与 GitHub 相同分支一并推送即可，例如 `git push origin main` 与 `git push gitee main`（将 `origin` / `gitee` 换成你的 remote 名）。Gitee 与 GitHub 可保持同一分支内容；仅首页展示语言通过上述 README 设置区分。
 
-本 npm 包（`name: memok-ai`）仅为 **OpenClaw 网关插件**。记忆引擎（文章流水线、SQLite、dreaming、`memok-ai` CLI）源码在 **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)**，境内镜像为 **[gitee.com/wik20/memok-ai](https://gitee.com/wik20/memok-ai)**。本仓依赖 **`memok-ai-core`** 默认从 **`git+https://gitee.com/wik20/memok-ai.git#v1.1.0`** 安装（与 GitHub 上 **同名 tag `v1.1.0`** 对齐；含 `prepare` → `npm run build`，首次会编译 **`better-sqlite3`**）。若必须从 **GitHub** 拉核心，可在 `npm install` 前设置环境变量 `MEMOK_CORE_GIT_URL`（见下文安装脚本说明），或手动改 `package.json` 后 `npm install`。
+本 npm 包（`name: memok-ai`）仅为 **OpenClaw 网关插件**。记忆引擎（文章流水线、SQLite、dreaming、`memok-ai` CLI）源码在 **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)**，境内镜像为 **[gitee.com/wik20/memok-ai](https://gitee.com/wik20/memok-ai)**。**仓库里的 `package.json` / `package-lock.json` 只有一份、不分国内版/国际版**：`memok-ai-core` 默认写 **`git+https://github.com/galaxy8691/memok-ai.git#v1.1.0`**（含 `prepare` → `npm run build`，首次会编译 **`better-sqlite3`**）。**境内**请用 **`install-cn-linux-macos.sh`**：脚本在 `npm install` **之前**用 `npm pkg set` 把核心改成 **Gitee**；**Windows** 若用 Gitee 地址克隆插件（`MEMOK_REPO_URL` 含 `gitee.com`），安装脚本同样会在安装前改指向 Gitee 核心。若你手动 `git clone` + `npm install`，且必须从 Gitee 拉核心，请先执行与脚本相同的 `npm pkg set`，或设置 `MEMOK_CORE_GIT_URL` 后再装依赖。
 
 **本仓库**（[GitHub](https://github.com/galaxy8691/memok-ai-openclaw)、[Gitee 镜像](https://gitee.com/wik20/memok-ai-openclaw)）只含薄插件源码（`src/plugin.ts`、`openclaw.plugin.json`、skills）。文档里的 `git clone` / raw 脚本默认指向 **memok-ai-openclaw**。
 
@@ -58,14 +58,14 @@ npm install
 
 ### 关于首次安装耗时（请先看）
 
-本仓库 **不声明 `openclaw` 依赖**（网关在运行时提供）。`npm install` 会拉取并构建 **`memok-ai-core`**（**默认 Gitee 核心仓**），其中含 **`better-sqlite3`**，冷缓存下常见 **数分钟**；若长时间停在某个包的 `install`/`postinstall`，多为正常编译。
+本仓库 **不声明 `openclaw` 依赖**（网关在运行时提供）。在本目录直接 **`npm install`** 时，会按 **`package.json` 默认从 GitHub** 拉取并构建 **`memok-ai-core`**（含 **`better-sqlite3`**），冷缓存下常见 **数分钟**；若长时间停在某个包的 `install`/`postinstall`，多为正常编译。
 
 建议：
 
 - **不要用** `--loglevel verbose` 日常安装。
-- 若有 **`.npmrc`**（如 npmmirror），会一并作用于依赖安装；**中国大陆**可优先用 **`install-cn-linux-macos.sh`**（脚本内会设国内 npm 源）。
+- 若有 **`.npmrc`**（如 npmmirror），会一并作用于依赖安装；**中国大陆**请优先用 **`install-cn-linux-macos.sh`**（脚本内会设国内 npm 源，并把核心依赖改到 **Gitee** 再 `npm install`）。
 
-**必须用 GitHub 拉核心时**（例如境外机器只方便访问 GitHub）：在安装脚本执行 `npm install` 之前设置 `export MEMOK_CORE_GIT_URL=https://github.com/galaxy8691/memok-ai.git`（可选 `MEMOK_CORE_GIT_REF=v1.1.0`）。PowerShell：`$env:MEMOK_CORE_GIT_URL = "https://github.com/galaxy8691/memok-ai.git"`。
+**在境内却走了 GitHub 官方安装脚本时**：在脚本的 `npm install` 前设置 `export MEMOK_CORE_GIT_URL=https://gitee.com/wik20/memok-ai.git`（可选 `MEMOK_CORE_GIT_REF=v1.1.0`）。PowerShell 同理设置 `$env:MEMOK_CORE_GIT_URL`。
 
 **完全离线：** 本地克隆核心仓并 `npm install && npm run build` 后，将本仓 `memok-ai-core` 改为 `"file:../memok-ai"`（路径自定）再 `npm install`。
 
@@ -121,8 +121,8 @@ install-windows.cmd
 - `MEMOK_REPO_URL_CN`（可选自定义主仓库；**国内安装脚本默认 Gitee**，未设置时为 `https://gitee.com/wik20/memok-ai-openclaw.git`）
 - `MEMOK_REPO_URL_FALLBACK`（回退仓库，默认 **GitHub**；国内安装脚本在主源失败时使用）
 - `MEMOK_REPO_URL`（**Windows** `install-windows.ps1`：若设置则用于 `git clone`，中文版说明中设为 Gitee）
-- `MEMOK_CORE_GIT_URL`（可选；**默认从 Gitee 拉核心**。若设为 `https://github.com/galaxy8691/memok-ai.git`，安装脚本会在 `npm install` 前把 `memok-ai-core` 指到 GitHub）
-- `MEMOK_CORE_GIT_REF`（可选；核心 Git 引用，默认 **`v1.1.0`**，须与 Gitee/GitHub 上 tag 一致）
+- `MEMOK_CORE_GIT_URL`（可选；**覆盖** `memok-ai-core` 的 Git HTTPS 地址。`package.json` 默认为 GitHub；国内脚本会自动改为 Gitee；若你自行安装需指定核心源，在 `npm install` 前设置此项）
+- `MEMOK_CORE_GIT_REF`（可选；核心 Git 引用，默认 **`v1.1.0`**，须在你使用的 Git 托管上存在同名 tag）
 - `MEMOK_NPM_REGISTRY`（默认 `https://registry.npmmirror.com`；国内安装脚本）
 
 若 `openclaw plugins install` 已显示成功但进程迟迟不退出（安装脚本停在下一行提示之前），多为 OpenClaw CLI 未结束。**Linux** 上 Bash 脚本可在 `script` 伪终端下运行该命令（可用 `MEMOK_PLUGINS_INSTALL_NO_PTY=1` 关闭）；**Windows PowerShell** 脚本为直接调用，无 PTY 包装。也可 `Ctrl+C` 后若插件文件已就绪，直接执行 `openclaw memok setup`。避免同一插件注册两次（例如同时配置 `memok-ai` 与 `memok-ai-src` 路径）——在 `openclaw.json` 中删除重复项可消除「duplicate plugin id」警告。
