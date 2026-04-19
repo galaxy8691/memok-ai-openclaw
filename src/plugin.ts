@@ -1,5 +1,5 @@
 import { copyFileSync, existsSync } from "node:fs";
-import { loadProjectEnv } from "memok-ai-core/openclaw-bridge";
+import { loadProjectEnv } from "memok-ai/openclaw-bridge";
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 import { applyMemokPluginLlmEnv } from "./plugin/applyMemokPluginLlmEnv.js";
 import {

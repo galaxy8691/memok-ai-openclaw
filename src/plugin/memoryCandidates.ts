@@ -6,7 +6,7 @@ import {
   MEMOK_MEMORY_INJECT_MARKER,
   type MemoryExtractedSentence,
   scrubOpenclawHeartbeatArtifacts,
-} from "memok-ai-core/openclaw-bridge";
+} from "memok-ai/openclaw-bridge";
 
 const MEMORY_CANDIDATE_TTL_MS = 30 * 60 * 1000;
 const MEMORY_CANDIDATE_MAP_MAX = 50;

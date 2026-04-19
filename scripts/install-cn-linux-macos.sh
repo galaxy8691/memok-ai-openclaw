@@ -13,7 +13,7 @@ fi
 
 REPO_URL_CN="${MEMOK_REPO_URL_CN:-https://gitee.com/wik20/memok-ai-openclaw.git}"
 REPO_URL_FALLBACK="${MEMOK_REPO_URL_FALLBACK:-https://github.com/galaxy8691/memok-ai-openclaw.git}"
-TARGET_DIR="${MEMOK_INSTALL_DIR:-$HOME/.openclaw/extensions/memok-ai-src}"
+TARGET_DIR="${MEMOK_INSTALL_DIR:-$HOME/.openclaw/extensions/memok-ai-openclaw-src}"
 NPM_REGISTRY="${MEMOK_NPM_REGISTRY:-https://registry.npmmirror.com}"
 
 # 可选：用 coreutils 的 timeout 限制命令运行时间（若已安装）。
@@ -38,12 +38,13 @@ run_openclaw_plugins_install() {
   fi
 }
 
-# setup 之后目录里已有 memok-ai；再次 `plugins install` 会报 plugin already exists。
+# setup 之后扩展目录里已有插件（目录名 = openclaw.plugin.json 的 id，当前为 memok-ai）；再次 `plugins install` 会报已存在。
 # 只同步构建产物与清单，保留 memok.sqlite、.env、node_modules。
 sync_memok_installed_plugin_from_source() {
   local src="$1"
   local name dest
-  name="$(cd "$src" && node -p "require('./package.json').name")"
+  # 与 OpenClaw 一致：扩展目录名来自 openclaw.plugin.json 的 id（当前为 memok-ai），不是 package.json 的 name。
+  name="$(cd "$src" && node -p "(() => { const fs=require('fs'); const o=JSON.parse(fs.readFileSync('openclaw.plugin.json','utf8')); const id=o&&o.id&&String(o.id).trim(); return id||require('./package.json').name; })()")"
   dest="$(dirname "$src")/$name"
   if [ ! -d "$dest" ] || [ ! -f "$dest/package.json" ]; then
     echo "[memok-ai cn installer] 未找到已安装目录 $dest ，改为执行 openclaw plugins install…"
@@ -129,21 +130,19 @@ need_cmd node
 echo "[memok-ai cn installer] 克隆/更新源码…"
 clone_or_update_repo "$REPO_URL_CN" "$REPO_URL_FALLBACK"
 
-# 仓库内 package.json 统一为 GitHub 核心源；本脚本在 npm install 前改为 Gitee（境内线路）。
-# 若显式指定 MEMOK_CORE_GIT_URL，则优先使用该 URL（例如仍想从 GitHub 拉核心）。
-patch_memok_core_dependency_cn() {
+# 核心库已发布到 npm（依赖名 memok-ai）。本脚本用境内 registry 安装即可。
+# 若必须从 Git 安装核心（离线/镜像未同步），设置 MEMOK_CORE_GIT_URL（可选 MEMOK_CORE_GIT_REF，默认 v0.1.0）。
+patch_memok_core_dependency_optional_git() {
   local prefix="$1"
-  local ref="${MEMOK_CORE_GIT_REF:-v1.1.0}"
-  if [ -n "${MEMOK_CORE_GIT_URL:-}" ]; then
-    echo "[memok-ai cn installer] MEMOK_CORE_GIT_URL 已设置 — memok-ai-core -> git+${MEMOK_CORE_GIT_URL}#${ref}"
-    npm --prefix "$prefix" pkg set "dependencies.memok-ai-core=git+${MEMOK_CORE_GIT_URL}#${ref}"
+  local ref="${MEMOK_CORE_GIT_REF:-v0.1.0}"
+  if [ -z "${MEMOK_CORE_GIT_URL:-}" ]; then
     return
   fi
-  echo "[memok-ai cn installer] 将 memok-ai-core 切换为 Gitee: wik20/memok-ai (#${ref}) …"
-  npm --prefix "$prefix" pkg set "dependencies.memok-ai-core=git+https://gitee.com/wik20/memok-ai.git#${ref}"
+  echo "[memok-ai cn installer] MEMOK_CORE_GIT_URL 已设置 — memok-ai -> git+${MEMOK_CORE_GIT_URL}#${ref}"
+  npm --prefix "$prefix" pkg set "dependencies.memok-ai=git+${MEMOK_CORE_GIT_URL}#${ref}"
 }
 
-patch_memok_core_dependency_cn "$TARGET_DIR"
+patch_memok_core_dependency_optional_git "$TARGET_DIR"
 
 echo "[memok-ai cn installer] 正在构建插件（registry: $NPM_REGISTRY）…"
 npm --prefix "$TARGET_DIR" install --registry "$NPM_REGISTRY" --prefer-offline --no-audit --progress=false

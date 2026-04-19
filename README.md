@@ -2,7 +2,7 @@
 
 English | [简体中文](./README.zh-CN.md) · Website: [memok-ai.com](https://www.memok-ai.com/) · Plugin mirror: [Gitee](https://gitee.com/wik20/memok-ai-openclaw)
 
-This repository is the **OpenClaw gateway extension** for Memok memory. The npm package is still named **`memok-ai`** (OpenClaw path `~/.openclaw/extensions/memok-ai/`). The **full memory engine** (pipeline, SQLite, dreaming, **`memok-ai` CLI**) lives in the [core repo](https://github.com/galaxy8691/memok-ai); details below after install.
+This repository is the **OpenClaw gateway extension** for Memok memory. The **npm package name** for this repo is **`memok-ai-openclaw`**. After **`openclaw plugins install`**, OpenClaw puts the extension under **`~/.openclaw/extensions/<plugin id>/`**, where **`<plugin id>`** comes from **`openclaw.plugin.json` → `id`** (currently **`memok-ai`**), **not** from `package.json` name — so the live folder is **`~/.openclaw/extensions/memok-ai/`**. The **full memory engine** is the separate npm package **[`memok-ai`](https://www.npmjs.com/package/memok-ai)**; details below after install.
 
 ## Requirements
 
@@ -13,23 +13,23 @@ This repository is the **OpenClaw gateway extension** for Memok memory. The npm 
 
 **One-line install:** paste into a terminal. **`curl -fsSL`** downloads the script from the raw URL; **`bash <(...)`** runs it in one step (process substitution—no separate “save file then chmod” step). You need **`git`**, **`node`**, **`npm`**, and **`openclaw`** already on your `PATH`.
 
-### Linux / macOS — default (GitHub for `memok-ai-core`)
+### Linux / macOS — default (npm registry for `memok-ai`)
 
-[`scripts/install-linux-macos.sh`](scripts/install-linux-macos.sh)
+[`scripts/install-linux-macos.sh`](scripts/install-linux-macos.sh) — installs core from **[npm `memok-ai`](https://www.npmjs.com/package/memok-ai)** (`"memok-ai": "^0.1.0"` in `package.json`; imports use **`memok-ai/openclaw-bridge`**).
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/galaxy8691/memok-ai-openclaw/main/scripts/install-linux-macos.sh)
 ```
 
-### Linux / macOS — mainland China (Gitee + npm mirror)
+### Linux / macOS — mainland China (Gitee clone + npmmirror)
 
-[`scripts/install-cn-linux-macos.sh`](scripts/install-cn-linux-macos.sh) — clones plugin from Gitee when possible, runs **`npm pkg set`** so **`memok-ai-core`** comes from Gitee before **`npm install`**.
+[`scripts/install-cn-linux-macos.sh`](scripts/install-cn-linux-macos.sh) — clones the **plugin** from Gitee when possible, then **`npm install --registry`** (default **npmmirror**) so **`memok-ai`** is fetched from the mirror. Optional: set **`MEMOK_CORE_GIT_URL`** to force **`memok-ai`** from Git instead of npm.
 
 ```bash
 bash <(curl -fsSL https://gitee.com/wik20/memok-ai-openclaw/raw/main/scripts/install-cn-linux-macos.sh)
 ```
 
-**Do not** use the **default** one-liner above if you only have Gitee access for the **core** dependency: that installer still pulls **`memok-ai-core`** from **GitHub** unless you set **`MEMOK_CORE_GIT_URL`**. Use the **China** line, or export **`MEMOK_CORE_GIT_URL`**=`https://gitee.com/wik20/memok-ai.git` (optional **`MEMOK_CORE_GIT_REF`**=`v1.1.0`) before running **`install-linux-macos.sh`**.
+If **`registry.npmjs.org`** is slow or blocked, use the **China** line (npmmirror) or set **`MEMOK_NPM_REGISTRY`** before **`install-linux-macos.sh`**. If the **`memok-ai`** tarball is unavailable on your registry, set **`MEMOK_CORE_GIT_URL`** (optional **`MEMOK_CORE_GIT_REF`**) to install the core from Git.
 
 If you already cloned this repo:
 
@@ -43,20 +43,20 @@ bash scripts/install-cn-linux-macos.sh
 
 [`scripts/install-windows.ps1`](scripts/install-windows.ps1) — **`irm`** downloads the script; **`| iex`** runs it.
 
-**Default (GitHub raw + GitHub core):**
+**Default (GitHub raw; core from npm):**
 
 ```powershell
 irm https://raw.githubusercontent.com/galaxy8691/memok-ai-openclaw/main/scripts/install-windows.ps1 | iex
 ```
 
-**Clone plugin from Gitee and patch core to Gitee:**
+**Clone plugin from Gitee** (installer uses **npmmirror** for `npm install` when the clone URL is Gitee):
 
 ```powershell
 $env:MEMOK_REPO_URL = "https://gitee.com/wik20/memok-ai-openclaw.git"
 irm https://gitee.com/wik20/memok-ai-openclaw/raw/main/scripts/install-windows.ps1 | iex
 ```
 
-**What the installers do:** `npm install` → `npm run build` → `openclaw plugins install` → `openclaw memok setup` → optional gateway restart → remove `~/.openclaw/extensions/memok-ai-src` unless **`MEMOK_KEEP_SOURCE=1`**.
+**What the installers do:** `npm install` → `npm run build` → `openclaw plugins install` → `openclaw memok setup` → optional gateway restart → remove `~/.openclaw/extensions/memok-ai-openclaw-src` unless **`MEMOK_KEEP_SOURCE=1`**.
 
 **Useful env vars:** `MEMOK_PLUGINS_INSTALL_TIMEOUT_SECONDS`, `MEMOK_PLUGINS_INSTALL_NO_PTY=1`, `MEMOK_SKIP_GATEWAY_RESTART=1`, `MEMOK_GATEWAY_RESTART_TIMEOUT_SECONDS`, `MEMOK_KEEP_SOURCE=1`, `MEMOK_REPO_URL` / `MEMOK_REPO_URL_CN` / `MEMOK_REPO_URL_FALLBACK`, `MEMOK_CORE_GIT_URL`, `MEMOK_CORE_GIT_REF`, `MEMOK_NPM_REGISTRY` (cn script defaults to npmmirror) — see script headers and [README.zh-CN.md](./README.zh-CN.md) for Chinese details.
 
@@ -74,44 +74,46 @@ openclaw plugins install .
 openclaw memok setup
 ```
 
-**From Gitee** (patch core **before** `npm install` if GitHub is unreachable):
+**From Gitee** (use a China-friendly registry so **`memok-ai`** resolves quickly):
 
 ```bash
 git clone https://gitee.com/wik20/memok-ai-openclaw.git
 cd memok-ai-openclaw
-npm pkg set dependencies.memok-ai-core=git+https://gitee.com/wik20/memok-ai.git#v1.1.0
-npm install && npm run build
+npm install --registry https://registry.npmmirror.com && npm run build
 openclaw plugins install .
 openclaw memok setup
 ```
 
-**Air-gapped:** build core locally, then set `"memok-ai-core": "file:/path/to/memok-ai"` in `package.json` and `npm install`.
+If you **cannot** use npm for the core package, **before** `npm install`:  
+`npm pkg set dependencies.memok-ai=git+https://gitee.com/wik20/memok-ai.git#v0.1.0`
+
+**Air-gapped:** build core locally, then set `"memok-ai": "file:/path/to/memok-ai"` in `package.json` and `npm install`.
 
 ## Core vs plugin (repos)
 
 |                        | Repository                                                                                                                                  | Role                                                                                               |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **Core**               | [galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai) · [Gitee mirror](https://gitee.com/wik20/memok-ai)                            | Pipelines, CLI, tests; dependency **`memok-ai-core`**, import **`memok-ai-core/openclaw-bridge`**. |
+| **Core**               | [galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai) · [Gitee mirror](https://gitee.com/wik20/memok-ai)                            | Pipelines, CLI, tests; npm **`memok-ai`**, import **`memok-ai/openclaw-bridge`**. |
 | **Plugin (this repo)** | [galaxy8691/memok-ai-openclaw](https://github.com/galaxy8691/memok-ai-openclaw) · [Gitee mirror](https://gitee.com/wik20/memok-ai-openclaw) | `src/plugin.ts`, `openclaw.plugin.json`, `skills/` only.                                           |
 
-**Single `package.json`:** `memok-ai-core` defaults to **`git+https://github.com/galaxy8691/memok-ai.git#v1.1.0`** (tag **`v1.1.0`** on that host). First `npm install` runs the core package’s **`prepare`** → `npm run build` (includes native **`better-sqlite3`**, often **minutes** on a cold cache).
+**Single `package.json`:** dependency **`memok-ai`** at **`^0.1.0`** ([`memok-ai` on npm](https://www.npmjs.com/package/memok-ai); plugin code imports **`memok-ai/openclaw-bridge`**). First `npm install` runs that package’s **`prepare`** → `npm run build` (includes native **`better-sqlite3`**, often **minutes** on a cold cache).
 
-**China / Gitee core without editing the repo:** use **`install-cn-linux-macos.sh`**, or on Windows set clone URL to Gitee (`MEMOK_REPO_URL`), or set **`MEMOK_CORE_GIT_URL`** before `npm install`.
+**China:** use **`install-cn-linux-macos.sh`** (npmmirror) or **`MEMOK_NPM_REGISTRY`**. **Git fallback for core:** set **`MEMOK_CORE_GIT_URL`** (and optional **`MEMOK_CORE_GIT_REF`**) before `npm install`.
 
 ## Development (clone this repo)
 
 ```bash
 git clone https://github.com/galaxy8691/memok-ai-openclaw.git
 cd memok-ai-openclaw
-npm install   # resolves memok-ai-core from GitHub per package.json
+npm install   # installs memok-ai from npm
 npm run build
 npm run ci    # lint + build + tests
 ```
 
-If you **only** have access to **Gitee** for the core library, **before** `npm install`:
+If you **cannot** pull **`memok-ai`** from npm, **before** `npm install`:
 
 ```bash
-npm pkg set dependencies.memok-ai-core=git+https://gitee.com/wik20/memok-ai.git#v1.1.0
+npm pkg set dependencies.memok-ai=git+https://gitee.com/wik20/memok-ai.git#v0.1.0
 npm install
 ```
 

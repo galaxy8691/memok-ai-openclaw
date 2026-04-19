@@ -3,7 +3,7 @@ import {
   openSqlite,
   type RunDreamingPipelineFromDbOpts,
   runDreamingPipelineFromDb,
-} from "memok-ai-core/openclaw-bridge";
+} from "memok-ai/openclaw-bridge";
 
 export type PluginLoggerLike = {
   info?: (msg: string) => void;

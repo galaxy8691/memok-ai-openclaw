@@ -5,7 +5,7 @@ import {
   saveTextToMemoryDb,
   scrubOpenclawHeartbeatArtifacts,
   stripMemokInjectEchoFromTranscript,
-} from "memok-ai-core/openclaw-bridge";
+} from "memok-ai/openclaw-bridge";
 import type { MemokConfig } from "./memokTypes.js";
 import { cronPatternFromDailyAt, isMemokSetupCliRun } from "./memokTypes.js";
 import {

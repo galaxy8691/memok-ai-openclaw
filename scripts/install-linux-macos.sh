@@ -6,7 +6,7 @@ if [ -r /dev/tty ]; then
 fi
 
 REPO_URL="${MEMOK_REPO_URL:-https://github.com/galaxy8691/memok-ai-openclaw.git}"
-TARGET_DIR="${MEMOK_INSTALL_DIR:-$HOME/.openclaw/extensions/memok-ai-src}"
+TARGET_DIR="${MEMOK_INSTALL_DIR:-$HOME/.openclaw/extensions/memok-ai-openclaw-src}"
 
 run_with_timeout() {
   local seconds="$1"
@@ -28,12 +28,13 @@ run_openclaw_plugins_install() {
   fi
 }
 
-# Second `plugins install` fails if ~/.openclaw/extensions/memok-ai already exists.
+# Second `plugins install` fails if ~/.openclaw/extensions/<plugin id> already exists (id from openclaw.plugin.json).
 # Copy dist + manifest (+ skills) only; keep sqlite, .env, node_modules.
 sync_memok_installed_plugin_from_source() {
   local src="$1"
   local name dest
-  name="$(cd "$src" && node -p "require('./package.json').name")"
+  # OpenClaw uses openclaw.plugin.json "id" as the extensions folder name (see installPluginFromPackageDir).
+  name="$(cd "$src" && node -p "(() => { const fs=require('fs'); const o=JSON.parse(fs.readFileSync('openclaw.plugin.json','utf8')); const id=o&&o.id&&String(o.id).trim(); return id||require('./package.json').name; })()")"
   dest="$(dirname "$src")/$name"
   if [ ! -d "$dest" ] || [ ! -f "$dest/package.json" ]; then
     echo "[memok-ai installer] installed dir missing at $dest; running openclaw plugins install..."
@@ -103,13 +104,13 @@ else
   git clone --depth=1 "$REPO_URL" "$TARGET_DIR"
 fi
 
-# package.json 统一默认 GitHub 核心。若需改用其他 Git HTTPS 源（如 Gitee），在 npm install 前设置：
+# 核心默认来自 npm（memok-ai）。若需改为 Git 源，在 npm install 前设置：
 #   export MEMOK_CORE_GIT_URL=https://gitee.com/wik20/memok-ai.git
-#   export MEMOK_CORE_GIT_REF=v1.1.0
+#   export MEMOK_CORE_GIT_REF=v0.1.0
 if [ -n "${MEMOK_CORE_GIT_URL:-}" ]; then
-  _ref="${MEMOK_CORE_GIT_REF:-v1.1.0}"
-  echo "[memok-ai installer] MEMOK_CORE_GIT_URL set — memok-ai-core -> git+${MEMOK_CORE_GIT_URL}#${_ref}"
-  npm --prefix "$TARGET_DIR" pkg set "dependencies.memok-ai-core=git+${MEMOK_CORE_GIT_URL}#${_ref}"
+  _ref="${MEMOK_CORE_GIT_REF:-v0.1.0}"
+  echo "[memok-ai installer] MEMOK_CORE_GIT_URL set — memok-ai -> git+${MEMOK_CORE_GIT_URL}#${_ref}"
+  npm --prefix "$TARGET_DIR" pkg set "dependencies.memok-ai=git+${MEMOK_CORE_GIT_URL}#${_ref}"
 fi
 
 echo "[memok-ai installer] building plugin dist..."

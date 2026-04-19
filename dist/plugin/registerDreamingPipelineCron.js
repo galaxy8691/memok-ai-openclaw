@@ -1,5 +1,5 @@
 import { Cron } from "croner";
-import { openSqlite, runDreamingPipelineFromDb, } from "memok-ai-core/openclaw-bridge";
+import { openSqlite, runDreamingPipelineFromDb, } from "memok-ai/openclaw-bridge";
 let active;
 /** 停止由本模块注册的定时任务（例如热重载前可调用；当前插件未单独挂接 reload）。 */
 export function stopDreamingPipelineCron() {

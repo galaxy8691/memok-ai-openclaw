@@ -1,8 +1,8 @@
-# Contributing to memok-ai (OpenClaw plugin repo)
+# Contributing to memok-ai-openclaw (OpenClaw plugin repo)
 
 Thanks for contributing.
 
-This tree is the **OpenClaw extension** only. Memory pipelines, SQLite, dreaming, and the `memok-ai` CLI live in **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)** (Gitee mirror: [wik20/memok-ai](https://gitee.com/wik20/memok-ai)) and are consumed here as **`memok-ai-core`**. **`package.json` pins the GitHub URL** for a single canonical lockfile; **`scripts/install-cn-linux-macos.sh`** rewrites `memok-ai-core` to the Gitee URL before `npm install` for China installs.
+This tree is the **OpenClaw extension** only. Memory pipelines, SQLite, dreaming, and the `memok-ai` CLI live in **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)** (Gitee mirror: [wik20/memok-ai](https://gitee.com/wik20/memok-ai)) and are consumed here as the npm dependency **`memok-ai`** (`^0.1.0` in `package.json`; import **`memok-ai/openclaw-bridge`**). **`scripts/install-cn-linux-macos.sh`** uses **npmmirror** for `npm install` by default; set **`MEMOK_CORE_GIT_URL`** only if you need to install the core from Git instead of npm.
 
 ## Development Setup
 
@@ -25,7 +25,7 @@ Formatting and linting use [Biome](https://biomejs.dev/) (`biome.json` at repo r
 ## Security and dependencies
 
 - Run `npm audit` periodically; review `npm audit fix` output before applying (semver and breaking changes).
-- Bumping **`memok-ai-core`**: edit the git tag/commit in [package.json](package.json), run `npm install`, verify `npm run ci`, then commit `package.json` and `package-lock.json`.
+- Bumping **`memok-ai`**: edit the semver range in [package.json](package.json), run `npm install`, verify `npm run ci`, then commit `package.json` and `package-lock.json`. (Git overrides are for exceptional installs only.)
 
 ## Pull Request Checklist
 
@@ -40,7 +40,7 @@ Before opening a PR:
 
 ## SQLite connections
 
-On-disk DB access is implemented in **`memok-ai-core`** (see `openSqlite` in the core repo). This plugin repo does not ship SQLite helpers.
+On-disk DB access is implemented in **`memok-ai`** (see `openSqlite` in the core repo). This plugin repo does not ship SQLite helpers.
 
 ## Code Style
 

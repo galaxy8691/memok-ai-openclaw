@@ -1,6 +1,6 @@
 Param(
   [string]$RepoUrl = "https://github.com/galaxy8691/memok-ai-openclaw.git",
-  [string]$TargetDir = "$env:USERPROFILE\.openclaw\extensions\memok-ai-src"
+  [string]$TargetDir = "$env:USERPROFILE\.openclaw\extensions\memok-ai-openclaw-src"
 )
 
 $ErrorActionPreference = "Stop"
@@ -25,7 +25,9 @@ Require-Command node
 function Sync-MemokInstalledPluginFromSource {
   param([string]$Src)
   $pkg = Get-Content (Join-Path $Src "package.json") -Raw | ConvertFrom-Json
-  $name = $pkg.name
+  $oc = Get-Content (Join-Path $Src "openclaw.plugin.json") -Raw | ConvertFrom-Json
+  # Match OpenClaw: install dir name is manifest "id" (currently memok-ai), not npm package "name".
+  $name = if ($oc.id -and $oc.id.Trim().Length -gt 0) { $oc.id.Trim() } else { $pkg.name }
   $parent = Split-Path -Parent $Src
   $dest = Join-Path $parent $name
   if (-not (Test-Path $dest) -or -not (Test-Path (Join-Path $dest "package.json"))) {
@@ -120,23 +122,31 @@ if (Test-Path (Join-Path $TargetDir ".git")) {
   git clone --depth=1 $RepoUrl $TargetDir | Out-Host
 }
 
-# package.json defaults to GitHub core. If plugin was cloned from Gitee, switch core to Gitee before npm install.
-# Override any time with: $env:MEMOK_CORE_GIT_URL = "https://..." ; optional $env:MEMOK_CORE_GIT_REF = "v1.1.0"
-$coreRef = "v1.1.0"
+# Core ships on npm (memok-ai). Optional: Git override before npm install:
+#   $env:MEMOK_CORE_GIT_URL = "https://..." ; optional $env:MEMOK_CORE_GIT_REF = "v0.1.0"
+$coreRef = "v0.1.0"
 if ($env:MEMOK_CORE_GIT_REF -and $env:MEMOK_CORE_GIT_REF.Trim().Length -gt 0) {
   $coreRef = $env:MEMOK_CORE_GIT_REF.Trim()
 }
 if ($env:MEMOK_CORE_GIT_URL -and $env:MEMOK_CORE_GIT_URL.Trim().Length -gt 0) {
   $u = $env:MEMOK_CORE_GIT_URL.Trim()
-  Write-Host "[memok-ai installer] MEMOK_CORE_GIT_URL set — memok-ai-core -> git+${u}#${coreRef}"
-  & npm --prefix $TargetDir pkg set "dependencies.memok-ai-core=git+${u}#${coreRef}" | Out-Host
-} elseif ($RepoUrl -match 'gitee\.com') {
-  Write-Host "[memok-ai installer] Gitee plugin URL — memok-ai-core -> gitee.com/wik20/memok-ai #${coreRef}"
-  & npm --prefix $TargetDir pkg set "dependencies.memok-ai-core=git+https://gitee.com/wik20/memok-ai.git#${coreRef}" | Out-Host
+  Write-Host "[memok-ai installer] MEMOK_CORE_GIT_URL set — memok-ai -> git+${u}#${coreRef}"
+  & npm --prefix $TargetDir pkg set "dependencies.memok-ai=git+${u}#${coreRef}" | Out-Host
 }
 
 Write-Host "[memok-ai installer] building plugin dist..."
-npm --prefix $TargetDir install | Out-Host
+$npmRegistry = $null
+if ($env:MEMOK_NPM_REGISTRY -and $env:MEMOK_NPM_REGISTRY.Trim().Length -gt 0) {
+  $npmRegistry = $env:MEMOK_NPM_REGISTRY.Trim()
+} elseif ($RepoUrl -match 'gitee\.com') {
+  $npmRegistry = "https://registry.npmmirror.com"
+}
+if ($null -ne $npmRegistry) {
+  Write-Host "[memok-ai installer] npm install --registry $npmRegistry"
+  npm --prefix $TargetDir install --registry $npmRegistry | Out-Host
+} else {
+  npm --prefix $TargetDir install | Out-Host
+}
 npm --prefix $TargetDir run build | Out-Host
 
 Write-Host "[memok-ai installer] installing plugin..."

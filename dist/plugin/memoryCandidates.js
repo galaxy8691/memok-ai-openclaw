@@ -1,5 +1,5 @@
 import { Type } from "@sinclair/typebox";
-import { extractMemorySentencesByWordSample, MEMOK_INJECT_END, MEMOK_INJECT_START, MEMOK_MEMORY_INJECT_MARKER, scrubOpenclawHeartbeatArtifacts, } from "memok-ai-core/openclaw-bridge";
+import { extractMemorySentencesByWordSample, MEMOK_INJECT_END, MEMOK_INJECT_START, MEMOK_MEMORY_INJECT_MARKER, scrubOpenclawHeartbeatArtifacts, } from "memok-ai/openclaw-bridge";
 const MEMORY_CANDIDATE_TTL_MS = 30 * 60 * 1000;
 const MEMORY_CANDIDATE_MAP_MAX = 50;
 /** sessionKey（或回退键）→ 最近一轮注入的句子 id，供工具校验与日志 */

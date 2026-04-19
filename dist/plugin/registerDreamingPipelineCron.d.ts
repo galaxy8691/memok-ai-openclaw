@@ -1,4 +1,4 @@
-import { type RunDreamingPipelineFromDbOpts } from "memok-ai-core/openclaw-bridge";
+import { type RunDreamingPipelineFromDbOpts } from "memok-ai/openclaw-bridge";
 export type PluginLoggerLike = {
     info?: (msg: string) => void;
     warn?: (msg: string) => void;

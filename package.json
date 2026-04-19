@@ -1,7 +1,7 @@
 {
-  "name": "memok-ai",
-  "version": "1.0.0",
-  "description": "OpenClaw gateway extension for memok-ai memory (core library: memok-ai-core)",
+  "name": "memok-ai-openclaw",
+  "version": "0.1.0",
+  "description": "OpenClaw gateway extension for Memok memory (npm package memok-ai-openclaw; core library: memok-ai)",
   "main": "dist/plugin.js",
   "type": "module",
   "openclaw": {
@@ -32,7 +32,7 @@
   "dependencies": {
     "@sinclair/typebox": "^0.34.49",
     "croner": "^10.0.1",
-    "memok-ai-core": "git+https://github.com/galaxy8691/memok-ai.git#v1.1.0"
+    "memok-ai": "^0.1.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.12",

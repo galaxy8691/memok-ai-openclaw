@@ -1,5 +1,5 @@
 import { writeFileSync } from "node:fs";
-import { applySentenceUsageFeedback, saveTextToMemoryDb, scrubOpenclawHeartbeatArtifacts, stripMemokInjectEchoFromTranscript, } from "memok-ai-core/openclaw-bridge";
+import { applySentenceUsageFeedback, saveTextToMemoryDb, scrubOpenclawHeartbeatArtifacts, stripMemokInjectEchoFromTranscript, } from "memok-ai/openclaw-bridge";
 import { cronPatternFromDailyAt, isMemokSetupCliRun } from "./memokTypes.js";
 import { memoryCandidateIdsBySession, RecallCandidateMemoriesParams, ReportUsedMemoryIdsParams, recallAndStoreCandidates, } from "./memoryCandidates.js";
 import { registerDreamingPipelineCron } from "./registerDreamingPipelineCron.js";
