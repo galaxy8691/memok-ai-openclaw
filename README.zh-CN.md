@@ -48,7 +48,7 @@ irm https://gitee.com/wik20/memok-ai-openclaw/raw/main/scripts/install-windows.p
 
 ## 手动安装（不用 curl 一键脚本）
 
-从 Gitee 克隆本仓；核心依赖 **`memok-ai@^0.1.4`**，建议用境内 registry 安装：
+从 Gitee 克隆本仓；核心依赖 **`memok-ai@^0.2.0`**，建议用境内 registry 安装：
 
 ```bash
 git clone https://gitee.com/wik20/memok-ai-openclaw.git
@@ -70,7 +70,9 @@ openclaw memok setup
 | **核心**         | [galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai) · [Gitee 镜像](https://gitee.com/wik20/memok-ai)                            | 管线、CLI、单测；npm 包 **`memok-ai`**，插件 **`memok-ai/bridge`**。 |
 | **插件（本仓）** | **[Gitee 主站](https://gitee.com/wik20/memok-ai-openclaw)** · [GitHub 镜像](https://github.com/galaxy8691/memok-ai-openclaw) | 仅 `src/plugin.ts`、`openclaw.plugin.json`、`skills/` 等胶水层。                                   |
 
-**`package.json` 只有一份：** 依赖 **`memok-ai`** 版本 **`^0.1.4`**（[npm 上的 `memok-ai`](https://www.npmjs.com/package/memok-ai)，代码从 **`memok-ai/bridge`** 引用）。首次 **`npm install`** 会执行该包的 **`prepare`** → `npm run build`（含 **`better-sqlite3`** 原生编译，冷缓存常见 **数分钟**）。
+**`package.json` 只有一份：** 依赖 **`memok-ai`** 版本 **`^0.2.0`**（[npm 上的 `memok-ai`](https://www.npmjs.com/package/memok-ai)，代码从 **`memok-ai/bridge`** 引用）。首次 **`npm install`** 会执行该包的 **`prepare`** → `npm run build`（含 **`better-sqlite3`** 原生编译，冷缓存常见 **数分钟**）。
+
+**Memok 管线配置：** 执行 **`openclaw memok setup`** 后，插件会写入 **`~/.openclaw/extensions/memok-ai/config.toml`**（即 `MemokPipelineConfig`）。网关启动时**只**从该文件加载管线配置；若缺失则打错误日志并跳过插件注册，需重新 setup。与 **`openclaw.json`**（cron、召回 UI 等）分工不同。
 
 **境内：** 使用 **`install-cn-linux-macos.sh`** 或 **`npm install --registry https://registry.npmmirror.com`**。**必须用 Git 装核心时** 设置 **`MEMOK_CORE_GIT_URL`**（可选 **`MEMOK_CORE_GIT_REF`**）后再 **`npm install`**。
 
@@ -118,7 +120,7 @@ npm run ci    # lint + build + test
 
 1. 进程环境变量优先
 2. 插件配置只补缺
-3. `.env` 主要用于 **核心仓** [memok-ai](https://github.com/galaxy8691/memok-ai) 的 CLI 开发
+3. **本插件**的 LLM + SQLite 管线参数来自 **`~/.openclaw/extensions/memok-ai/config.toml`**（见 `openclaw memok setup`）；核心 CLI 若另有开发说明以核心仓文档为准。
 
 纯插件用户一般只需 `openclaw memok setup`。
 

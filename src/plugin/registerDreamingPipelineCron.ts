@@ -1,7 +1,8 @@
 import { Cron } from "croner";
 import {
-  type RunDreamingPipelineFromDbOpts,
-  runDreamingPipelineFromDb,
+  type DreamingPipelineConfig,
+  dreamingPipeline,
+  type MemokPipelineConfig,
 } from "memok-ai/bridge";
 
 export type PluginLoggerLike = {
@@ -18,20 +19,24 @@ export function stopDreamingPipelineCron(): void {
   active = undefined;
 }
 
+export type DreamingStoryTuning = Pick<
+  DreamingPipelineConfig,
+  "maxWords" | "fraction" | "minRuns" | "maxRuns" | "pickRunCount"
+>;
+
 /**
- * 在 OpenClaw 网关进程内按 cron 调度执行 `runDreamingPipelineFromDb`（需网关常驻）。
- * 与系统 crontab 无关；时区由 `timezone` 或本机默认决定。
- * `dream_logs` 由核心库 `runDreamingPipelineFromDb` 内写入（见 memok-ai `persistDreamPipelineLogToDb`）。
+ * 在 OpenClaw 网关进程内按 cron 调度执行 `dreamingPipeline`（需网关常驻）。
+ * `dream_logs` 由核心在 `dreamingPipeline` 内写入。
  */
 export function registerDreamingPipelineCron(params: {
   logger: PluginLoggerLike;
-  dbPath: string;
+  pipeline: MemokPipelineConfig;
   pattern: string;
   timezone?: string;
-  pipelineOpts?: RunDreamingPipelineFromDbOpts;
+  storyTuning?: DreamingStoryTuning;
 }): void {
   stopDreamingPipelineCron();
-  const { logger, dbPath, pattern, timezone, pipelineOpts } = params;
+  const { logger, pipeline, pattern, timezone, storyTuning } = params;
 
   try {
     const job = new Cron(
@@ -44,17 +49,16 @@ export function registerDreamingPipelineCron(params: {
       async () => {
         try {
           logger.info?.(
-            `[memok-ai] dreaming-pipeline（定时）开始: db=${dbPath}`,
+            `[memok-ai] dreaming-pipeline（定时）开始: db=${pipeline.dbPath}`,
           );
-          const mergedOpts: RunDreamingPipelineFromDbOpts = {
-            ...pipelineOpts,
-            dreamLogWarn:
-              pipelineOpts?.dreamLogWarn ??
-              ((msg: string) => {
-                logger.warn?.(msg);
-              }),
+          const input: DreamingPipelineConfig = {
+            ...pipeline,
+            ...storyTuning,
+            dreamLogWarn: (msg: string) => {
+              logger.warn?.(msg);
+            },
           };
-          const out = await runDreamingPipelineFromDb(dbPath, mergedOpts);
+          const out = await dreamingPipeline(input);
           const p = out.predream;
           const s = out.storyWordSentencePipeline;
           logger.info?.(
@@ -72,7 +76,7 @@ export function registerDreamingPipelineCron(params: {
       `[memok-ai] dreaming-pipeline 已调度: cron=${pattern}${timezone ? ` tz=${timezone}` : ""} 下次=${next?.toISOString() ?? "unknown"}`,
     );
     logger.info?.(
-      "[memok-ai] dreaming 结果由核心库写入 SQLite 表 dream_logs（runDreamingPipelineFromDb）",
+      "[memok-ai] dreaming 结果由核心库写入 SQLite 表 dream_logs（dreamingPipeline）",
     );
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

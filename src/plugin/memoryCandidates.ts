@@ -1,6 +1,7 @@
 import { Type } from "@sinclair/typebox";
 import {
   extractMemorySentencesByWordSample,
+  type MemokPipelineConfig,
   type MemoryExtractedSentence,
 } from "memok-ai/bridge";
 import { scrubOpenclawHeartbeatArtifacts } from "./scrubOpenclawHeartbeatArtifacts.js";
@@ -106,13 +107,14 @@ export type RecallStoreResult =
  * 抽样并写入本轮 session 的候选 id，供 prepend / 工具 / 反馈校验共用。
  */
 export function recallAndStoreCandidates(
-  dbPath: string,
+  pipeline: MemokPipelineConfig,
   extractFraction: number,
   longTermFraction: number,
   maxInjectChars: number,
   sessionMemKey: string,
 ): RecallStoreResult {
-  const out = extractMemorySentencesByWordSample(dbPath, {
+  const out = extractMemorySentencesByWordSample({
+    ...pipeline,
     fraction: extractFraction,
     longTermFraction,
   });

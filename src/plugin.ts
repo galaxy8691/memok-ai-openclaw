@@ -1,7 +1,14 @@
 import { copyFileSync, existsSync } from "node:fs";
-import { loadProjectEnv } from "memok-ai/bridge";
+import type { MemokPipelineConfig } from "memok-ai/bridge";
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 import { applyMemokPluginLlmEnv } from "./plugin/applyMemokPluginLlmEnv.js";
+import { getMemokExtensionConfigTomlPath } from "./plugin/memokConfigPaths.js";
+import {
+  assertPipelineDbPathMatchesOpenclaw,
+  buildMemokPipelineConfigForWizard,
+  loadMemokPipelineConfig,
+  writeMemokPipelineToml,
+} from "./plugin/memokPipelineConfigToml.js";
 import {
   expandUserPath,
   getDefaultDbPath,
@@ -48,6 +55,9 @@ export default definePluginEntry({
             >;
             const next = mergeMemokSetupToConfig(cur, answers);
             await runtimeConfig.writeConfigFile(next);
+            const tomlPath = getMemokExtensionConfigTomlPath();
+            const tomlCfg = buildMemokPipelineConfigForWizard(next);
+            writeMemokPipelineToml(tomlCfg);
             const dbPath = resolveMemokDbPathFromConfig(next);
             const cleanPath = `${dbPath}.clean`;
             let copiedFromClean = false;
@@ -65,6 +75,7 @@ export default definePluginEntry({
                 copiedFromClean
                   ? `- 已从 ${cleanPath} 复制初始库到 ${dbPath}`
                   : `- 未找到 ${cleanPath}，跳过初始库复制`,
+                `- Memok 管线配置: ${tomlPath}`,
                 "",
                 "请重启 gateway 使新配置生效。",
               ].join("\n"),
@@ -125,7 +136,6 @@ export default definePluginEntry({
       return;
     }
 
-    loadProjectEnv();
     applyMemokPluginLlmEnv(pluginCfg, api.logger);
     if (
       (pluginCfg.llmProvider ?? "inherit") !== "inherit" ||
@@ -139,6 +149,23 @@ export default definePluginEntry({
     }
 
     const dbPath = expandUserPath(pluginCfg.dbPath || getDefaultDbPath());
+    let pipeline: MemokPipelineConfig;
+    try {
+      pipeline = loadMemokPipelineConfig();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      api.logger?.error?.(`[memok-ai] ${msg}`);
+      return;
+    }
+    try {
+      assertPipelineDbPathMatchesOpenclaw(pipeline, dbPath);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      api.logger?.error?.(
+        `[memok-ai] ${msg}。请修正 openclaw.json 中的 dbPath 或重新运行 openclaw memok setup。`,
+      );
+      return;
+    }
     const memoryInjectEnabled = pluginCfg.memoryInjectEnabled !== false;
     const rawMode = pluginCfg.memoryRecallMode ?? "skill+hint";
     let memoryRecallMode: MemokConfig["memoryRecallMode"];
@@ -173,7 +200,7 @@ export default definePluginEntry({
 
     const runtimeCtx: MemokRuntimeContext = {
       pluginCfg,
-      dbPath,
+      pipeline,
       memoryInjectEnabled,
       memoryRecallMode,
       extractFraction,

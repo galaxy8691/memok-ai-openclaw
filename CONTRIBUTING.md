@@ -2,7 +2,7 @@
 
 Thanks for contributing.
 
-This tree is the **OpenClaw extension** only. Memory pipelines, SQLite, dreaming, and the `memok-ai` CLI live in **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)** (Gitee mirror: [wik20/memok-ai](https://gitee.com/wik20/memok-ai)) and are consumed here as the npm dependency **`memok-ai`** (`^0.1.4` in `package.json`; import **`memok-ai/bridge`**). **`scripts/install-cn-linux-macos.sh`** uses **npmmirror** for `npm install` by default; set **`MEMOK_CORE_GIT_URL`** only if you need to install the core from Git instead of npm.
+This tree is the **OpenClaw extension** only. Memory pipelines, SQLite, dreaming, and the `memok-ai` CLI live in **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)** (Gitee mirror: [wik20/memok-ai](https://gitee.com/wik20/memok-ai)) and are consumed here as the npm dependency **`memok-ai`** (`^0.2.0` in `package.json`; import **`memok-ai/bridge`** for `articleWordPipeline`, `dreamingPipeline`, recall/feedback helpers). **Runtime `MemokPipelineConfig` is read from** `~/.openclaw/extensions/memok-ai/config.toml` (written by `openclaw memok setup`); the plugin does **not** assemble pipelines from `.env`. **`scripts/install-cn-linux-macos.sh`** uses **npmmirror** for `npm install` by default; set **`MEMOK_CORE_GIT_URL`** only if you need to install the core from Git instead of npm.
 
 ## Development Setup
 
@@ -41,7 +41,13 @@ Before opening a PR:
 
 ## SQLite connections
 
-On-disk memory schema and **`dream_logs`** persistence for the dreaming pipeline live in **`memok-ai`** (`runDreamingPipelineFromDb` → `persistDreamPipelineLogToDb`). This plugin does not open SQLite directly for dreaming.
+On-disk memory schema and **`dream_logs`** persistence for the dreaming pipeline live in **`memok-ai`** (`dreamingPipeline` → `persistDreamPipelineLogToDb`). This plugin does not open SQLite directly for dreaming.
+
+## Memok pipeline configuration
+
+- **File:** `~/.openclaw/extensions/memok-ai/config.toml` (fixed path).
+- **Created by:** `openclaw memok setup` after updating `openclaw.json`.
+- **Runtime:** [`loadMemokPipelineConfig`](src/plugin/memokPipelineConfigToml.ts) reads and validates the file; missing/invalid file disables the plugin with an error log (no `.env` fallback for `MemokPipelineConfig`).
 
 ## Code Style
 

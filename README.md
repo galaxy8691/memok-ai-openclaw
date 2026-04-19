@@ -15,7 +15,7 @@ This repository is the **OpenClaw gateway extension** for Memok memory. The **np
 
 ### Linux / macOS — default (npm registry for `memok-ai`)
 
-[`scripts/install-linux-macos.sh`](scripts/install-linux-macos.sh) — installs core from **[npm `memok-ai`](https://www.npmjs.com/package/memok-ai)** (`"memok-ai": "^0.1.4"` in `package.json`; imports use **`memok-ai/bridge`**).
+[`scripts/install-linux-macos.sh`](scripts/install-linux-macos.sh) — installs core from **[npm `memok-ai`](https://www.npmjs.com/package/memok-ai)** (`"memok-ai": "^0.2.0"` in `package.json`; imports use **`memok-ai/bridge`**).
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/galaxy8691/memok-ai-openclaw/main/scripts/install-linux-macos.sh)
@@ -96,7 +96,9 @@ If you **cannot** use npm for the core package, **before** `npm install`:
 | **Core**               | [galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai) · [Gitee mirror](https://gitee.com/wik20/memok-ai)                            | Pipelines, CLI, tests; npm **`memok-ai`**, import **`memok-ai/bridge`**. |
 | **Plugin (this repo)** | [galaxy8691/memok-ai-openclaw](https://github.com/galaxy8691/memok-ai-openclaw) · [Gitee mirror](https://gitee.com/wik20/memok-ai-openclaw) | `src/plugin.ts`, `openclaw.plugin.json`, `skills/` only.                                           |
 
-**Single `package.json`:** dependency **`memok-ai`** at **`^0.1.4`** ([`memok-ai` on npm](https://www.npmjs.com/package/memok-ai); plugin code imports **`memok-ai/bridge`**). First `npm install` runs that package’s **`prepare`** → `npm run build` (includes native **`better-sqlite3`**, often **minutes** on a cold cache).
+**Single `package.json`:** dependency **`memok-ai`** at **`^0.2.0`** ([`memok-ai` on npm](https://www.npmjs.com/package/memok-ai); plugin code imports **`memok-ai/bridge`**). First `npm install` runs that package’s **`prepare`** → `npm run build` (includes native **`better-sqlite3`**, often **minutes** on a cold cache).
+
+**Memok pipeline config:** after `openclaw memok setup`, the plugin writes **`~/.openclaw/extensions/memok-ai/config.toml`** (a `MemokPipelineConfig`). At gateway startup the plugin loads **only** that file for `articleWordPipeline` / dreaming / recall; if it is missing, the plugin logs an error and skips registration until you run setup again. This is separate from `openclaw.json` (which still holds cron, recall UI flags, etc.).
 
 **China:** use **`install-cn-linux-macos.sh`** (npmmirror) or **`MEMOK_NPM_REGISTRY`**. **Git fallback for core:** set **`MEMOK_CORE_GIT_URL`** (and optional **`MEMOK_CORE_GIT_REF`**) before `npm install`.
 
@@ -148,7 +150,7 @@ When dreaming cron runs, each run is stored in SQLite **`dream_logs`**: `dream_d
 
 1. Existing environment variables win
 2. Plugin config fills gaps only
-3. `.env` is for **core** CLI dev in [memok-ai](https://github.com/galaxy8691/memok-ai)
+3. For **this plugin**, LLM + SQLite pipeline settings come from **`~/.openclaw/extensions/memok-ai/config.toml`** (see `openclaw memok setup`). Core CLI may still document its own dev env elsewhere.
 
 Plugin users normally rely on `openclaw memok setup` only.
 

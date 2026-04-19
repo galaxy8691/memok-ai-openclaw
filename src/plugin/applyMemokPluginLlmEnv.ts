@@ -63,6 +63,14 @@ function resolveBaseUrl(
   return PRESET_BASE_URL[provider];
 }
 
+/** 供 `config.toml` 组装：由插件 LLM 配置解析 OpenAI 兼容 Base URL。 */
+export function resolveLlmBaseUrlForProvider(
+  cfg: MemokLlmEnvConfig,
+): string | undefined {
+  const provider = (cfg.llmProvider ?? "inherit") as MemokLlmProvider;
+  return resolveBaseUrl(cfg, provider);
+}
+
 export function applyMemokPluginLlmEnv(
   cfg: MemokLlmEnvConfig | undefined,
   logger?: { warn?: (msg: string) => void },

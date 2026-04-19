@@ -1,8 +1,8 @@
 import { writeFileSync } from "node:fs";
 import {
   applySentenceUsageFeedback,
-  articleWordPipelineSaveDb,
-  type RunDreamingPipelineFromDbOpts,
+  articleWordPipeline,
+  type MemokPipelineConfig,
 } from "memok-ai/bridge";
 import type { MemokConfig } from "./memokTypes.js";
 import { cronPatternFromDailyAt, isMemokSetupCliRun } from "./memokTypes.js";
@@ -12,7 +12,10 @@ import {
   ReportUsedMemoryIdsParams,
   recallAndStoreCandidates,
 } from "./memoryCandidates.js";
-import { registerDreamingPipelineCron } from "./registerDreamingPipelineCron.js";
+import {
+  type DreamingStoryTuning,
+  registerDreamingPipelineCron,
+} from "./registerDreamingPipelineCron.js";
 import { scrubOpenclawHeartbeatArtifacts } from "./scrubOpenclawHeartbeatArtifacts.js";
 import { stripMemokInjectEchoFromTranscript } from "./stripMemokInjectEchoFromTranscript.js";
 import {
@@ -33,7 +36,7 @@ const sessionProgress = new Map<
 
 export type MemokRuntimeContext = {
   pluginCfg: MemokConfig;
-  dbPath: string;
+  pipeline: MemokPipelineConfig;
   memoryInjectEnabled: boolean;
   memoryRecallMode: NonNullable<MemokConfig["memoryRecallMode"]>;
   extractFraction: number;
@@ -48,7 +51,7 @@ export function registerMemokPluginRuntime(
 ): void {
   const {
     pluginCfg,
-    dbPath,
+    pipeline,
     memoryInjectEnabled,
     memoryRecallMode,
     extractFraction,
@@ -76,30 +79,30 @@ export function registerMemokPluginRuntime(
         pluginCfg.dreamingPipelineTimezone.trim()
           ? pluginCfg.dreamingPipelineTimezone.trim()
           : undefined;
-      const pipelineOpts: RunDreamingPipelineFromDbOpts = {};
+      const storyTuning: DreamingStoryTuning = {};
       const mw = pluginCfg.dreamingPipelineMaxWords;
       if (typeof mw === "number" && Number.isFinite(mw)) {
-        pipelineOpts.maxWords = Math.floor(mw);
+        storyTuning.maxWords = Math.floor(mw);
       }
       const fr = pluginCfg.dreamingPipelineFraction;
       if (typeof fr === "number" && Number.isFinite(fr)) {
-        pipelineOpts.fraction = fr;
+        storyTuning.fraction = fr;
       }
       const mn = pluginCfg.dreamingPipelineMinRuns;
       if (typeof mn === "number" && Number.isFinite(mn)) {
-        pipelineOpts.minRuns = Math.floor(mn);
+        storyTuning.minRuns = Math.floor(mn);
       }
       const mx = pluginCfg.dreamingPipelineMaxRuns;
       if (typeof mx === "number" && Number.isFinite(mx)) {
-        pipelineOpts.maxRuns = Math.floor(mx);
+        storyTuning.maxRuns = Math.floor(mx);
       }
       registerDreamingPipelineCron({
         logger: api.logger ?? {},
-        dbPath,
+        pipeline,
         pattern: rawCron,
         timezone: dreamingTz,
-        pipelineOpts:
-          Object.keys(pipelineOpts).length > 0 ? pipelineOpts : undefined,
+        storyTuning:
+          Object.keys(storyTuning).length > 0 ? storyTuning : undefined,
       });
     }
   }
@@ -137,7 +140,7 @@ export function registerMemokPluginRuntime(
     );
     api.logger?.info(`[memok-ai] 记忆管线开始 (${source})…`);
     try {
-      await articleWordPipelineSaveDb(stripped, { dbPath });
+      await articleWordPipeline(stripped, pipeline);
       api.logger?.info(`[memok-ai] 记忆已保存 (${source})`);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
@@ -154,7 +157,7 @@ export function registerMemokPluginRuntime(
         const sessionMemKey = ctx.sessionKey ?? ctx.sessionId ?? "unknown";
         if (memoryRecallMode === "prepend") {
           const r = recallAndStoreCandidates(
-            dbPath,
+            pipeline,
             extractFraction,
             longTermFraction,
             maxInjectChars,
@@ -175,7 +178,7 @@ export function registerMemokPluginRuntime(
         }
         const useSkillHint = memoryRecallMode === "skill+hint";
         const r = recallAndStoreCandidates(
-          dbPath,
+          pipeline,
           extractFraction,
           longTermFraction,
           maxInjectChars,
@@ -236,7 +239,7 @@ export function registerMemokPluginRuntime(
               toolCtx.sessionKey ?? toolCtx.sessionId ?? "unknown";
             try {
               const r = recallAndStoreCandidates(
-                dbPath,
+                pipeline,
                 extractFraction,
                 longTermFraction,
                 maxInjectChars,
@@ -323,10 +326,10 @@ export function registerMemokPluginRuntime(
             let updatedCount = 0;
             if (validIds.length > 0) {
               try {
-                ({ updatedCount } = applySentenceUsageFeedback(
-                  dbPath,
-                  validIds,
-                ));
+                ({ updatedCount } = applySentenceUsageFeedback({
+                  ...pipeline,
+                  sentenceIds: validIds,
+                }));
               } catch (error: unknown) {
                 const msg =
                   error instanceof Error ? error.message : String(error);
