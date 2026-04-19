@@ -1,12 +1,14 @@
 import { Type } from "@sinclair/typebox";
 import {
   extractMemorySentencesByWordSample,
+  type MemoryExtractedSentence,
+} from "memok-ai/bridge";
+import { scrubOpenclawHeartbeatArtifacts } from "./scrubOpenclawHeartbeatArtifacts.js";
+import {
   MEMOK_INJECT_END,
   MEMOK_INJECT_START,
   MEMOK_MEMORY_INJECT_MARKER,
-  type MemoryExtractedSentence,
-  scrubOpenclawHeartbeatArtifacts,
-} from "memok-ai/openclaw-bridge";
+} from "./stripMemokInjectEchoFromTranscript.js";
 
 const MEMORY_CANDIDATE_TTL_MS = 30 * 60 * 1000;
 const MEMORY_CANDIDATE_MAP_MAX = 50;

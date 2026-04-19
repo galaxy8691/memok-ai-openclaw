@@ -4,3 +4,4 @@ memok.sqlite.clean
 test-db/
 .env
 .env.*
+dist/

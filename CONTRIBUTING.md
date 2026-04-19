@@ -2,7 +2,7 @@
 
 Thanks for contributing.
 
-This tree is the **OpenClaw extension** only. Memory pipelines, SQLite, dreaming, and the `memok-ai` CLI live in **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)** (Gitee mirror: [wik20/memok-ai](https://gitee.com/wik20/memok-ai)) and are consumed here as the npm dependency **`memok-ai`** (`^0.1.0` in `package.json`; import **`memok-ai/openclaw-bridge`**). **`scripts/install-cn-linux-macos.sh`** uses **npmmirror** for `npm install` by default; set **`MEMOK_CORE_GIT_URL`** only if you need to install the core from Git instead of npm.
+This tree is the **OpenClaw extension** only. Memory pipelines, SQLite, dreaming, and the `memok-ai` CLI live in **[galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai)** (Gitee mirror: [wik20/memok-ai](https://gitee.com/wik20/memok-ai)) and are consumed here as the npm dependency **`memok-ai`** (`^0.1.4` in `package.json`; import **`memok-ai/bridge`**). **`scripts/install-cn-linux-macos.sh`** uses **npmmirror** for `npm install` by default; set **`MEMOK_CORE_GIT_URL`** only if you need to install the core from Git instead of npm.
 
 ## Development Setup
 
@@ -41,7 +41,7 @@ Before opening a PR:
 
 ## SQLite connections
 
-On-disk DB access is implemented in **`memok-ai`** (see `openSqlite` in the core repo). This plugin repo does not ship SQLite helpers.
+On-disk memory schema and **`dream_logs`** persistence for the dreaming pipeline live in **`memok-ai`** (`runDreamingPipelineFromDb` → `persistDreamPipelineLogToDb`). This plugin does not open SQLite directly for dreaming.
 
 ## Code Style
 

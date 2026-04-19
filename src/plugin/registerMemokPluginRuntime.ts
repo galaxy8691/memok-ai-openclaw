@@ -1,11 +1,9 @@
 import { writeFileSync } from "node:fs";
 import {
   applySentenceUsageFeedback,
+  articleWordPipelineSaveDb,
   type RunDreamingPipelineFromDbOpts,
-  saveTextToMemoryDb,
-  scrubOpenclawHeartbeatArtifacts,
-  stripMemokInjectEchoFromTranscript,
-} from "memok-ai/openclaw-bridge";
+} from "memok-ai/bridge";
 import type { MemokConfig } from "./memokTypes.js";
 import { cronPatternFromDailyAt, isMemokSetupCliRun } from "./memokTypes.js";
 import {
@@ -15,6 +13,8 @@ import {
   recallAndStoreCandidates,
 } from "./memoryCandidates.js";
 import { registerDreamingPipelineCron } from "./registerDreamingPipelineCron.js";
+import { scrubOpenclawHeartbeatArtifacts } from "./scrubOpenclawHeartbeatArtifacts.js";
+import { stripMemokInjectEchoFromTranscript } from "./stripMemokInjectEchoFromTranscript.js";
 import {
   clampToLastChars,
   collectLabeledTurns,
@@ -137,7 +137,7 @@ export function registerMemokPluginRuntime(
     );
     api.logger?.info(`[memok-ai] 记忆管线开始 (${source})…`);
     try {
-      await saveTextToMemoryDb(stripped, { dbPath });
+      await articleWordPipelineSaveDb(stripped, { dbPath });
       api.logger?.info(`[memok-ai] 记忆已保存 (${source})`);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);

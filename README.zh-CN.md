@@ -48,7 +48,7 @@ irm https://gitee.com/wik20/memok-ai-openclaw/raw/main/scripts/install-windows.p
 
 ## 手动安装（不用 curl 一键脚本）
 
-从 Gitee 克隆本仓；核心依赖 **`memok-ai@^0.1.0`**，建议用境内 registry 安装：
+从 Gitee 克隆本仓；核心依赖 **`memok-ai@^0.1.4`**，建议用境内 registry 安装：
 
 ```bash
 git clone https://gitee.com/wik20/memok-ai-openclaw.git
@@ -67,10 +67,10 @@ openclaw memok setup
 
 |                  | 仓库                                                                                                                                      | 职责                                                                                               |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **核心**         | [galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai) · [Gitee 镜像](https://gitee.com/wik20/memok-ai)                            | 管线、CLI、单测；npm 包 **`memok-ai`**，插件 **`memok-ai/openclaw-bridge`**。 |
+| **核心**         | [galaxy8691/memok-ai](https://github.com/galaxy8691/memok-ai) · [Gitee 镜像](https://gitee.com/wik20/memok-ai)                            | 管线、CLI、单测；npm 包 **`memok-ai`**，插件 **`memok-ai/bridge`**。 |
 | **插件（本仓）** | **[Gitee 主站](https://gitee.com/wik20/memok-ai-openclaw)** · [GitHub 镜像](https://github.com/galaxy8691/memok-ai-openclaw) | 仅 `src/plugin.ts`、`openclaw.plugin.json`、`skills/` 等胶水层。                                   |
 
-**`package.json` 只有一份：** 依赖 **`memok-ai`** 版本 **`^0.1.0`**（[npm 上的 `memok-ai`](https://www.npmjs.com/package/memok-ai)，代码从 **`memok-ai/openclaw-bridge`** 引用）。首次 **`npm install`** 会执行该包的 **`prepare`** → `npm run build`（含 **`better-sqlite3`** 原生编译，冷缓存常见 **数分钟**）。
+**`package.json` 只有一份：** 依赖 **`memok-ai`** 版本 **`^0.1.4`**（[npm 上的 `memok-ai`](https://www.npmjs.com/package/memok-ai)，代码从 **`memok-ai/bridge`** 引用）。首次 **`npm install`** 会执行该包的 **`prepare`** → `npm run build`（含 **`better-sqlite3`** 原生编译，冷缓存常见 **数分钟**）。
 
 **境内：** 使用 **`install-cn-linux-macos.sh`** 或 **`npm install --registry https://registry.npmmirror.com`**。**必须用 Git 装核心时** 设置 **`MEMOK_CORE_GIT_URL`**（可选 **`MEMOK_CORE_GIT_REF`**）后再 **`npm install`**。
 
