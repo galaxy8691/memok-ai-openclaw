@@ -26,6 +26,7 @@ Formatting and linting use [Biome](https://biomejs.dev/) (`biome.json` at repo r
 
 - Run `npm audit` periodically; review `npm audit fix` output before applying (semver and breaking changes).
 - Bumping **`memok-ai`**: edit the semver range in [package.json](package.json), run `npm install`, verify `npm run ci`, then commit `package.json` and `package-lock.json`. (Git overrides are for exceptional installs only.)
+- **Patch upgrades within the same range** (e.g. `^0.1.0` → latest `0.1.x`): `package-lock.json` pins the exact tarball CI installs (`npm ci`). End users cloning this repo get that pinned version until maintainers run **`npm update memok-ai`** (or delete the `memok-ai` stanza in the lockfile and re-run `npm install`) and commit the updated lockfile. Installing the plugin via OpenClaw copies whatever `node_modules` was produced from that lockfile, so it does not float to the registry’s latest by itself.
 
 ## Pull Request Checklist
 
