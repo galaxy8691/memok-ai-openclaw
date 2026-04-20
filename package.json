@@ -33,7 +33,7 @@
     "@iarna/toml": "^3.0.0",
     "@sinclair/typebox": "^0.34.49",
     "croner": "^10.0.1",
-    "memok-ai": "^0.2.0"
+    "memok-ai": "^0.2.2"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.12",
