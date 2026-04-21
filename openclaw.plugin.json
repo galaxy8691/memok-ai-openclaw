@@ -34,6 +34,21 @@
       "label": "每日发梦时间",
       "placeholder": "03:00",
       "help": "填写每日 HH:mm 即可；不必写 cron。未填 dreamingPipelineCron 时由该时间生成调度。"
+    },
+    "articleWordImportInitialWeight": {
+      "label": "落库句子初始 weight",
+      "advanced": true,
+      "help": "写入 config.toml：article-word 新插入 sentences 行的初始 weight；正整数，省略时由 memok-ai 默认（通常为 1）。"
+    },
+    "articleWordImportInitialDuration": {
+      "label": "落库句子初始 duration",
+      "advanced": true,
+      "help": "写入 config.toml：新插入句子的初始 duration；正整数，省略时由 memok-ai 默认（通常为 7）。"
+    },
+    "dreamShortTermToLongTermWeightThreshold": {
+      "label": "发梦：短期升长期 weight 阈值",
+      "advanced": true,
+      "help": "写入 config.toml：predream 中短期句 weight ≥ 该值则升为长期；正整数，省略时核心默认 7。"
     }
   },
   "configSchema": {
@@ -271,6 +286,24 @@
       "dreamingPipelineMaxRuns": {
         "type": "number",
         "description": "多轮 story 随机上限，同 --max-runs"
+      },
+      "articleWordImportInitialWeight": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 1000000,
+        "description": "article-word 新插入 sentences 的初始 weight（写入 config.toml；与 memok-ai MemokPipelineConfig 一致）"
+      },
+      "articleWordImportInitialDuration": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 1000000,
+        "description": "新插入 sentences 的初始 duration（写入 config.toml）"
+      },
+      "dreamShortTermToLongTermWeightThreshold": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100000,
+        "description": "predream 短期句升为长期的最小 weight 阈值（写入 config.toml；核心默认 7）"
       }
     }
   }

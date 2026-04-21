@@ -1,5 +1,5 @@
 /**
- * 与 memok-ai `src/config/memokPipelineConfig.ts` 中默认值一致（不读 `.env`）。
+ * 与 memok-ai `MemokPipelineConfig` 写入 TOML 的常用默认值一致（不读 `.env`）。
  */
 export const DEFAULT_LLM_MODEL = "gpt-4o-mini";
 export const DEFAULT_ARTICLE_SENTENCES_MAX_OUTPUT = 8192;

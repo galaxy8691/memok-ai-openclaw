@@ -56,6 +56,12 @@ export interface MemokConfig extends MemokLlmEnvConfig {
   dreamingPipelineFraction?: number;
   dreamingPipelineMinRuns?: number;
   dreamingPipelineMaxRuns?: number;
+  /** 写入 `config.toml` → `MemokPipelineConfig`；新插入句子的初始 weight（默认由核心决定） */
+  articleWordImportInitialWeight?: number;
+  /** 写入 `config.toml`；新插入句子的初始 duration */
+  articleWordImportInitialDuration?: number;
+  /** 写入 `config.toml`；predream 短期句升长期的最小 weight 阈值 */
+  dreamShortTermToLongTermWeightThreshold?: number;
 }
 
 /** 网关 `plugins.entries.memok-ai`：顶层 `enabled`，选项在 `config` */

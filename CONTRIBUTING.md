@@ -60,7 +60,7 @@ After `npm run build` and installing the plugin into OpenClaw (for example **`op
 
 - **File:** `~/.openclaw/extensions/memok-ai/config.toml` (fixed path).
 - **Created by:** `openclaw memok setup` after updating `openclaw.json`.
-- **Runtime:** [`loadMemokPipelineConfig`](src/plugin/memokPipelineConfigToml.ts) reads and validates the file; missing/invalid file disables the plugin with an error log (no `.env` fallback for `MemokPipelineConfig`).
+- **Runtime:** [`loadMemokPipelineConfig`](src/plugin/memokPipelineConfigToml.ts) reads and validates the file; missing/invalid file disables the plugin with an error log (no `.env` fallback for `MemokPipelineConfig`). Optional fields such as **`articleWordImportInitialWeight`** / **`articleWordImportInitialDuration`** / **`dreamShortTermToLongTermWeightThreshold`** (see **`memok-ai`** `MemokPipelineConfig`) are supported in TOML and may be set via **`openclaw.json`** plugin config for UI parity; `openclaw memok setup` merges them into **`config.toml`** when present.
 
 ## Code Style
 

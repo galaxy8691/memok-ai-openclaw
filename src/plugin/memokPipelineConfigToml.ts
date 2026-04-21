@@ -12,14 +12,69 @@ import {
 import { expandUserPath, resolveMemokDbPathFromConfig } from "./memokTypes.js";
 
 const MAX_LLM_WORKERS_CAP = 64;
+/** 与核心 `positiveIntOrDefault` / predream 阈值校验一致：正整数上界（TOML / 向导合并） */
+const MAX_ARTICLE_IMPORT_WEIGHT = 1_000_000;
+const MAX_ARTICLE_IMPORT_DURATION = 1_000_000;
+const MAX_DREAM_SHORT_TERM_WEIGHT_THRESHOLD = 100_000;
 
-function getMemokEntryConfig(root: Record<string, unknown>): MemokLlmEnvConfig {
+function getMemokPluginConfigRecord(
+  root: Record<string, unknown>,
+): Record<string, unknown> {
   const plugins = (root.plugins as Record<string, unknown> | undefined) ?? {};
   const entries =
     (plugins.entries as Record<string, unknown> | undefined) ?? {};
   const entry =
     (entries["memok-ai"] as Record<string, unknown> | undefined) ?? {};
-  return (entry.config as MemokLlmEnvConfig | undefined) ?? {};
+  return (entry.config as Record<string, unknown> | undefined) ?? {};
+}
+
+function getMemokEntryConfig(root: Record<string, unknown>): MemokLlmEnvConfig {
+  return getMemokPluginConfigRecord(root) as MemokLlmEnvConfig;
+}
+
+/** 从 `openclaw.json` 插件 config 取出与 `MemokPipelineConfig` 对齐的可选数值（仅合法正整数才写入 TOML） */
+function optionalPipelineTuningFromOpenclaw(
+  cfg: Record<string, unknown>,
+): Pick<
+  MemokPipelineConfig,
+  | "articleWordImportInitialWeight"
+  | "articleWordImportInitialDuration"
+  | "dreamShortTermToLongTermWeightThreshold"
+> {
+  const out: Pick<
+    MemokPipelineConfig,
+    | "articleWordImportInitialWeight"
+    | "articleWordImportInitialDuration"
+    | "dreamShortTermToLongTermWeightThreshold"
+  > = {};
+  const w = cfg.articleWordImportInitialWeight;
+  if (
+    typeof w === "number" &&
+    Number.isInteger(w) &&
+    w >= 1 &&
+    w <= MAX_ARTICLE_IMPORT_WEIGHT
+  ) {
+    out.articleWordImportInitialWeight = w;
+  }
+  const d = cfg.articleWordImportInitialDuration;
+  if (
+    typeof d === "number" &&
+    Number.isInteger(d) &&
+    d >= 1 &&
+    d <= MAX_ARTICLE_IMPORT_DURATION
+  ) {
+    out.articleWordImportInitialDuration = d;
+  }
+  const t = cfg.dreamShortTermToLongTermWeightThreshold;
+  if (
+    typeof t === "number" &&
+    Number.isInteger(t) &&
+    t >= 1 &&
+    t <= MAX_DREAM_SHORT_TERM_WEIGHT_THRESHOLD
+  ) {
+    out.dreamShortTermToLongTermWeightThreshold = t;
+  }
+  return out;
 }
 
 /**
@@ -31,6 +86,8 @@ export function buildMemokPipelineConfigForWizard(
 ): MemokPipelineConfig {
   const dbPath = resolveMemokDbPathFromConfig(root);
   const entryCfg = getMemokEntryConfig(root);
+  const pluginCfg = getMemokPluginConfigRecord(root);
+  const pipelineExtras = optionalPipelineTuningFromOpenclaw(pluginCfg);
 
   const openaiApiKey =
     (entryCfg.llmApiKey ?? "").trim() ||
@@ -61,6 +118,7 @@ export function buildMemokPipelineConfigForWizard(
     sentenceMergeMaxCompletionTokens:
       MEMOK_PIPELINE_DEFAULTS.sentenceMergeMaxCompletionTokens,
     skipLlmStructuredParse: MEMOK_PIPELINE_DEFAULTS.skipLlmStructuredParse,
+    ...pipelineExtras,
   };
 }
 
@@ -183,6 +241,25 @@ export function parseMemokPipelineTomlContent(
     );
   }
 
+  const articleWordImportInitialWeight = expectOptionalPositiveInt(
+    o,
+    "articleWordImportInitialWeight",
+    pathLabel,
+    MAX_ARTICLE_IMPORT_WEIGHT,
+  );
+  const articleWordImportInitialDuration = expectOptionalPositiveInt(
+    o,
+    "articleWordImportInitialDuration",
+    pathLabel,
+    MAX_ARTICLE_IMPORT_DURATION,
+  );
+  const dreamShortTermToLongTermWeightThreshold = expectOptionalPositiveInt(
+    o,
+    "dreamShortTermToLongTermWeightThreshold",
+    pathLabel,
+    MAX_DREAM_SHORT_TERM_WEIGHT_THRESHOLD,
+  );
+
   return {
     dbPath,
     openaiApiKey,
@@ -193,7 +270,29 @@ export function parseMemokPipelineTomlContent(
     coreWordsNormalizeMaxOutputTokens,
     sentenceMergeMaxCompletionTokens,
     ...(skipLlmStructuredParse !== undefined ? { skipLlmStructuredParse } : {}),
+    ...(articleWordImportInitialWeight !== undefined
+      ? { articleWordImportInitialWeight }
+      : {}),
+    ...(articleWordImportInitialDuration !== undefined
+      ? { articleWordImportInitialDuration }
+      : {}),
+    ...(dreamShortTermToLongTermWeightThreshold !== undefined
+      ? { dreamShortTermToLongTermWeightThreshold }
+      : {}),
   };
+}
+
+function expectOptionalPositiveInt(
+  o: Record<string, unknown>,
+  key: string,
+  pathLabel: string,
+  max: number,
+): number | undefined {
+  const v = o[key];
+  if (v === undefined || v === null) {
+    return undefined;
+  }
+  return expectIntInRange(v, key, pathLabel, 1, max);
 }
 
 export function loadMemokPipelineConfig(): MemokPipelineConfig {
