@@ -37,10 +37,10 @@ export function isMemokSetupCliRun(): boolean {
   return argv[memokIdx + 1] === "setup";
 }
 
-/** `plugins.entries.memok-ai.config` 与 manifest 字段对应 */
+/** Mirrors `plugins.entries.memok-ai.config` and manifest fields */
 export interface MemokConfig extends MemokLlmEnvConfig {
   dbPath?: string;
-  /** 与网关 entry 顶层的 `enabled` 同义时可出现在 config 内 */
+  /** May mirror top-level `enabled` on the gateway entry */
   enabled?: boolean;
   memoryInjectEnabled?: boolean;
   memoryRecallMode?: "skill" | "skill+hint" | "prepend";
@@ -56,15 +56,15 @@ export interface MemokConfig extends MemokLlmEnvConfig {
   dreamingPipelineFraction?: number;
   dreamingPipelineMinRuns?: number;
   dreamingPipelineMaxRuns?: number;
-  /** 写入 `config.toml` → `MemokPipelineConfig`；新插入句子的初始 weight（默认由核心决定） */
+  /** Written to config.toml → MemokPipelineConfig; initial sentence weight for new imports */
   articleWordImportInitialWeight?: number;
-  /** 写入 `config.toml`；新插入句子的初始 duration */
+  /** Written to config.toml; initial sentence duration for new imports */
   articleWordImportInitialDuration?: number;
-  /** 写入 `config.toml`；predream 短期句升长期的最小 weight 阈值 */
+  /** Written to config.toml; predream short→long-term weight threshold */
   dreamShortTermToLongTermWeightThreshold?: number;
 }
 
-/** 网关 `plugins.entries.memok-ai`：顶层 `enabled`，选项在 `config` */
+/** Gateway entry `plugins.entries.memok-ai`: top-level `enabled`, options under `config` */
 export interface MemokPluginEntry {
   enabled?: boolean;
   config?: MemokConfig;
@@ -84,7 +84,7 @@ export function cronPatternFromDailyAt(
   const m = t.match(/^(\d{1,2}):(\d{2})$/);
   if (!m) {
     logger?.warn?.(
-      `[memok-ai] dreamingPipelineDailyAt 格式无效（期望 HH:mm）：${t}`,
+      `[memok-ai] dreamingPipelineDailyAt invalid format (expected HH:mm): ${t} (中文：格式应为 HH:mm)`,
     );
     return undefined;
   }
@@ -99,7 +99,7 @@ export function cronPatternFromDailyAt(
     minute > 59
   ) {
     logger?.warn?.(
-      `[memok-ai] dreamingPipelineDailyAt 超出范围（00:00~23:59）：${t}`,
+      `[memok-ai] dreamingPipelineDailyAt out of range (00:00–23:59): ${t} (中文：时间超出范围)`,
     );
     return undefined;
   }

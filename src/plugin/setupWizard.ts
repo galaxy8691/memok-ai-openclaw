@@ -69,7 +69,7 @@ async function pickByNumber(
   while (true) {
     const options = rows.map((x, i) => `${i + 1}) ${x}`).join("\n");
     const raw = await ask(
-      `${title}\n${options}\n选择 [默认 ${defaultIndex + 1}]: `,
+      `${title}\n${options}\nPick [default ${defaultIndex + 1}] (选择，默认 ${defaultIndex + 1}): `,
     );
     const t = raw.trim();
     if (!t) return defaultIndex;
@@ -86,7 +86,7 @@ export async function promptMemokSetupAnswers(): Promise<MemokSetupAnswers> {
   try {
     const pIdx = await pickByNumber(
       ask,
-      "选择 LLM 供应商：",
+      "LLM provider (供应商):",
       PROVIDERS.map((p) => p),
       0,
     );
@@ -97,7 +97,7 @@ export async function promptMemokSetupAnswers(): Promise<MemokSetupAnswers> {
       const presets = PRESET_BY_PROVIDER[llmProvider];
       const mIdx = await pickByNumber(
         ask,
-        "选择模型预设（推荐非 reasoning/think）：",
+        "Model preset — prefer non-reasoning models (模型预设，建议非 reasoning/think):",
         presets,
         0,
       );
@@ -106,20 +106,22 @@ export async function promptMemokSetupAnswers(): Promise<MemokSetupAnswers> {
 
     const llmModel = clean(
       await ask(
-        `可选：手填 llmModel（留空=沿用上一步预设${llmModelPreset ? `：${llmModelPreset}` : ""}）: `,
+        `Optional llmModel override (leave empty = preset${llmModelPreset ? ` ${llmModelPreset}` : ""}) 可选手填模型: `,
       ),
     );
-    const llmApiKey = clean(await ask("可选：API Key（留空则沿用环境变量）: "));
+    const llmApiKey = clean(
+      await ask("Optional API Key (empty = use env 留空用环境变量): "),
+    );
     const llmBaseUrl =
       llmProvider === "custom"
         ? clean(
             await ask(
-              "custom 模式请填写 Base URL（如 https://api.xxx.com/v1）: ",
+              "custom: Base URL (e.g. https://api.example.com/v1) custom 模式 Base URL: ",
             ),
           )
         : undefined;
     const dreamingOn = toYes(
-      await ask("是否启用 dreaming 定时任务？(Y/n): "),
+      await ask("Enable dreaming on a schedule? Y/n (启用发梦定时): "),
       true,
     );
     let dreamingPipelineDailyAt: string | undefined;
@@ -127,19 +129,24 @@ export async function promptMemokSetupAnswers(): Promise<MemokSetupAnswers> {
     if (dreamingOn) {
       while (true) {
         const raw =
-          (await ask("每日触发时间 HH:mm [默认 03:00]: ")).trim() || "03:00";
+          (await ask("Daily HH:mm [default 03:00] 每日触发时间: ")).trim() ||
+          "03:00";
         if (isValidDailyAt(raw)) {
           dreamingPipelineDailyAt = raw;
           break;
         }
       }
       dreamingPipelineTimezone = clean(
-        await ask("可选：时区（如 Asia/Shanghai，留空使用系统时区）: "),
+        await ask(
+          "Optional timezone (e.g. Asia/Shanghai; empty = system) 可选时区: ",
+        ),
       );
     }
 
     if (llmProvider === "custom" && !llmBaseUrl) {
-      throw new Error("llmProvider=custom 时必须提供 llmBaseUrl");
+      throw new Error(
+        "llmProvider=custom requires llmBaseUrl. 中文：custom 必须填写 llmBaseUrl。",
+      );
     }
 
     return {
@@ -198,7 +205,7 @@ export function mergeMemokSetupToConfig(
   }
 
   const nextSlots: Record<string, unknown> = { ...slots };
-  // 向导固定把 memory 槽交给 memok-ai，避免网关侧「槽位仍是 memory-core」导致插件不生效、发梦不跑。
+  // Wizard pins the memory slot to memok-ai so the gateway does not keep another memory provider.
   nextSlots.memory = "memok-ai";
 
   return {

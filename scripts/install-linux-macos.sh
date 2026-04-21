@@ -104,9 +104,10 @@ else
   git clone --depth=1 "$REPO_URL" "$TARGET_DIR"
 fi
 
-# 核心默认来自 npm（memok-ai）。若需改为 Git 源，在 npm install 前设置：
+# Core `memok-ai` defaults to npm. For Git-based core, before npm install set e.g.:
 #   export MEMOK_CORE_GIT_URL=https://gitee.com/wik20/memok-ai.git
 #   export MEMOK_CORE_GIT_REF=v0.1.0
+# 中文：核心默认 npm；改 Git 源见上环境变量。
 if [ -n "${MEMOK_CORE_GIT_URL:-}" ]; then
   _ref="${MEMOK_CORE_GIT_REF:-v0.1.0}"
   echo "[memok-ai installer] MEMOK_CORE_GIT_URL set — memok-ai -> git+${MEMOK_CORE_GIT_URL}#${_ref}"

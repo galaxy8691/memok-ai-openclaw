@@ -13,7 +13,7 @@ export type PluginLoggerLike = {
 
 let active: Cron | undefined;
 
-/** 停止由本模块注册的定时任务（例如热重载前可调用；当前插件未单独挂接 reload）。 */
+/** Stop the cron job registered by this module (e.g. before hot reload; plugin does not wire reload yet). */
 export function stopDreamingPipelineCron(): void {
   active?.stop();
   active = undefined;
@@ -25,8 +25,8 @@ export type DreamingStoryTuning = Pick<
 >;
 
 /**
- * 在 OpenClaw 网关进程内按 cron 调度执行 `dreamingPipeline`（需网关常驻）。
- * `dream_logs` 由核心在 `dreamingPipeline` 内写入。
+ * Schedule `dreamingPipeline` inside the OpenClaw gateway process (long-running).
+ * Core writes `dream_logs` inside `dreamingPipeline`.
  */
 export function registerDreamingPipelineCron(params: {
   logger: PluginLoggerLike;
@@ -49,7 +49,7 @@ export function registerDreamingPipelineCron(params: {
       async () => {
         try {
           logger.info?.(
-            `[memok-ai] dreaming-pipeline（定时）开始: db=${pipeline.dbPath}`,
+            `[memok-ai] dreaming-pipeline (scheduled) start: db=${pipeline.dbPath}`,
           );
           const input: DreamingPipelineConfig = {
             ...pipeline,
@@ -62,26 +62,28 @@ export function registerDreamingPipelineCron(params: {
           const p = out.predream;
           const s = out.storyWordSentencePipeline;
           logger.info?.(
-            `[memok-ai] dreaming-pipeline（定时）完成: predream(durationDec=${p.sentencesDurationDecremented} promoted=${p.promotedToLongTerm} deleted=${p.deletedSentences}) storyRuns=${s.plannedRuns}`,
+            `[memok-ai] dreaming-pipeline (scheduled) done: predream(durationDec=${p.sentencesDurationDecremented} promoted=${p.promotedToLongTerm} deleted=${p.deletedSentences}) storyRuns=${s.plannedRuns}`,
           );
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
-          logger.error?.(`[memok-ai] dreaming-pipeline（定时）失败: ${msg}`);
+          logger.error?.(
+            `[memok-ai] dreaming-pipeline (scheduled) failed: ${msg}`,
+          );
         }
       },
     );
     active = job;
     const next = job.nextRun();
     logger.info?.(
-      `[memok-ai] dreaming-pipeline 已调度: cron=${pattern}${timezone ? ` tz=${timezone}` : ""} 下次=${next?.toISOString() ?? "unknown"}`,
+      `[memok-ai] dreaming-pipeline scheduled: cron=${pattern}${timezone ? ` tz=${timezone}` : ""} next=${next?.toISOString() ?? "unknown"}`,
     );
     logger.info?.(
-      "[memok-ai] dreaming 结果由核心库写入 SQLite 表 dream_logs（dreamingPipeline）",
+      "[memok-ai] dreaming results are written to SQLite table dream_logs by memok-ai core. (中文：发梦结果由核心写入 dream_logs)",
     );
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     logger.error?.(
-      `[memok-ai] dreaming-pipeline 定时无效: pattern=${pattern} ${msg}`,
+      `[memok-ai] dreaming-pipeline cron invalid: pattern=${pattern} ${msg}`,
     );
   }
 }

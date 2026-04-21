@@ -1,54 +1,54 @@
 {
   "id": "memok-ai",
   "name": "Memok AI Memory",
-  "description": "自动保存 OpenClaw 对话到 memok-ai 记忆系统",
+  "description": "Persist OpenClaw conversations into the memok-ai SQLite memory system. 中文：将 OpenClaw 对话写入 memok-ai 记忆库。",
   "kind": "memory",
   "skills": ["skills/memok-memory"],
   "uiHints": {
     "llmProvider": {
-      "label": "LLM 供应商",
-      "help": "OpenAI 兼容接口预设；选「沿用环境变量」则只使用网关/进程环境里的 OPENAI_* / MEMOK_LLM_MODEL，不在此写密钥。"
+      "label": "LLM provider (供应商)",
+      "help": "OpenAI-compatible preset; choose inherit to use only gateway env OPENAI_* / MEMOK_LLM_MODEL. 中文：选 inherit 则不在此写密钥，仅用环境变量。"
     },
     "llmApiKey": {
       "label": "API Key",
       "sensitive": true,
       "placeholder": "sk-…",
-      "help": "写入 OPENAI_API_KEY（若环境中尚未设置）。与 OpenAI SDK 一致，兼容智谱/DeepSeek/OpenRouter 等提供的 Key。"
+      "help": "Maps to OPENAI_API_KEY when not already set in the process. Same semantics as the OpenAI SDK (Zhipu, DeepSeek, OpenRouter, etc.). 中文：未设置进程环境变量时写入 OPENAI_API_KEY。"
     },
     "llmBaseUrl": {
-      "label": "自定义 Base URL",
+      "label": "Custom Base URL",
       "advanced": true,
       "placeholder": "https://api.example.com/v1",
-      "help": "仅当 LLM 供应商为「custom」时使用，对应 OPENAI_BASE_URL。"
+      "help": "Used when llmProvider is custom; maps to OPENAI_BASE_URL. 中文：仅 custom 时填写，对应 OPENAI_BASE_URL。"
     },
     "llmModel": {
-      "label": "默认模型",
+      "label": "Default model",
       "placeholder": "gpt-4o-mini",
-      "help": "手填自定义模型名（优先级高于下拉预设），写入 MEMOK_LLM_MODEL。建议优先选择非 reasoning/think 模型。"
+      "help": "Manual model name (overrides preset when set); maps to MEMOK_LLM_MODEL. Prefer non-reasoning models. 中文：手填模型名，建议非 reasoning/think。"
     },
     "llmModelPreset": {
-      "label": "模型预设（推荐）",
-      "help": "先选择供应商，再从该供应商常见非 reasoning/think 模型里选；仅当 llmModel 留空时生效。"
+      "label": "Model preset (recommended)",
+      "help": "Pick a provider first, then a common non-reasoning model; used only when llmModel is empty. 中文：llmModel 留空时生效。"
     },
     "dreamingPipelineDailyAt": {
-      "label": "每日发梦时间",
+      "label": "Daily dreaming time",
       "placeholder": "03:00",
-      "help": "填写每日 HH:mm 即可；不必写 cron。未填 dreamingPipelineCron 时由该时间生成调度。"
+      "help": "Daily HH:mm; no cron syntax needed. When dreamingPipelineCron is empty, schedule is derived from this field. 中文：每日发梦时间 HH:mm。"
     },
     "articleWordImportInitialWeight": {
-      "label": "落库句子初始 weight",
+      "label": "Initial sentence weight (import)",
       "advanced": true,
-      "help": "写入 config.toml：article-word 新插入 sentences 行的初始 weight；正整数，省略时由 memok-ai 默认（通常为 1）。"
+      "help": "Written to config.toml: initial weight for new sentences from article-word pipeline; positive integer; omit for memok-ai default (usually 1). 中文：落库句子初始 weight。"
     },
     "articleWordImportInitialDuration": {
-      "label": "落库句子初始 duration",
+      "label": "Initial sentence duration (import)",
       "advanced": true,
-      "help": "写入 config.toml：新插入句子的初始 duration；正整数，省略时由 memok-ai 默认（通常为 7）。"
+      "help": "Written to config.toml: initial duration for new sentences; positive integer; omit for memok-ai default (usually 7). 中文：落库句子初始 duration。"
     },
     "dreamShortTermToLongTermWeightThreshold": {
-      "label": "发梦：短期升长期 weight 阈值",
+      "label": "Dreaming: short→long-term weight threshold",
       "advanced": true,
-      "help": "写入 config.toml：predream 中短期句 weight ≥ 该值则升为长期；正整数，省略时核心默认 7。"
+      "help": "Written to config.toml: in predream, short-term rows with weight ≥ this value promote to long-term; positive integer; omit for core default 7. 中文：predream 短期升长期阈值。"
     }
   },
   "configSchema": {
@@ -168,7 +168,7 @@
     "properties": {
       "dbPath": {
         "type": "string",
-        "description": "SQLite 数据库路径",
+        "description": "SQLite database path. 中文：SQLite 数据库路径。",
         "default": "~/.openclaw/extensions/memok-ai/memok.sqlite"
       },
       "llmProvider": {
@@ -183,20 +183,20 @@
           "ollama",
           "custom"
         ],
-        "description": "OpenAI 兼容 LLM：inherit=不设 Base URL（用环境变量）；各预设自动填 OPENAI_BASE_URL；custom 时使用 llmBaseUrl",
+        "description": "OpenAI-compatible LLM: inherit leaves Base URL unset (use env); presets fill OPENAI_BASE_URL; custom uses llmBaseUrl. 中文：inherit 用环境；各预设自动 Base URL；custom 用手填 URL。",
         "default": "inherit"
       },
       "llmApiKey": {
         "type": "string",
-        "description": "映射到 OPENAI_API_KEY（仅当进程内尚未设置时写入）"
+        "description": "Maps to OPENAI_API_KEY when not already set in the process. 中文：映射到 OPENAI_API_KEY（仅当未设置时）。"
       },
       "llmBaseUrl": {
         "type": "string",
-        "description": "llmProvider=custom 时的 OPENAI_BASE_URL（须含 /v1 等路径，视供应商文档）"
+        "description": "When llmProvider=custom, maps to OPENAI_BASE_URL (include /v1 per vendor docs). 中文：custom 时的 OPENAI_BASE_URL。"
       },
       "llmModel": {
         "type": "string",
-        "description": "映射到 MEMOK_LLM_MODEL（仅当尚未设置时写入）"
+        "description": "Maps to MEMOK_LLM_MODEL when not already set. 中文：映射到 MEMOK_LLM_MODEL。"
       },
       "llmModelPreset": {
         "type": "string",
@@ -216,94 +216,94 @@
           "qwen2.5:7b-instruct",
           "llama3.1:8b-instruct"
         ],
-        "description": "模型预设下拉。建议选择非 reasoning/think 模型。仅当 llmModel 留空时会映射到 MEMOK_LLM_MODEL"
+        "description": "Preset dropdown; prefer non-reasoning models. Used when llmModel is empty. 中文：模型预设，llmModel 留空时映射到 MEMOK_LLM_MODEL。"
       },
       "enabled": {
         "type": "boolean",
-        "description": "是否启用插件（含自动保存与记忆注入）；为 false 时整插件不注册",
+        "description": "Enable the plugin (persist + recall); false disables registration. 中文：为 false 时整插件不注册。",
         "default": true
       },
       "memoryInjectEnabled": {
         "type": "boolean",
-        "description": "是否启用候选记忆能力（skill+工具 或 prepend 注入；与自动保存独立）",
+        "description": "Enable candidate memory injection (skill/tools or prepend); independent of persist. 中文：候选记忆注入，与落库独立。",
         "default": true
       },
       "memoryRecallMode": {
         "type": "string",
         "enum": ["skill", "skill+hint", "prepend"],
-        "description": "skill=每轮 appendSystemContext 强制候选+技能；工具同轮再抽样。skill+hint=同上+prependSystemContext/prependContext 提示+append 首行【memok】说明（默认；部分 UI 不显示 prepend 时仍见系统段）。prepend=整块 prependContext（旧行为）",
+        "description": "skill: appendSystemContext each turn + tools. skill+hint: same plus short prepend hint. prepend: legacy full prependContext. 中文：skill/skill+hint/prepend 三种召回展示模式。",
         "default": "skill+hint"
       },
       "persistTranscriptToMemory": {
         "type": "boolean",
-        "description": "是否在每轮结束后把对话 transcript 写入 SQLite（默认 true）。候选记忆由 @@@MEMOK_RECALL_*@@@ 包裹，落库前会剥离；仅当不想落库时设为 false",
+        "description": "Write conversation transcripts to SQLite each turn (default true). Recall markers are stripped before persist. 中文：每轮落库；@@@MEMOK_RECALL_*@@@ 会先剥离。",
         "default": true
       },
       "extractFraction": {
         "type": "number",
-        "description": "记忆注入时对 words 表的抽样比例（同 extract-memory-sentences）",
+        "description": "Sampling fraction over the words table for recall (same idea as extract-memory-sentences). 中文：words 表抽样比例。",
         "default": 0.2
       },
       "longTermFraction": {
         "type": "number",
-        "description": "非短期句池加权抽样比例；默认与 extractFraction 相同"
+        "description": "Weighted sampling fraction on the non-short-term pool; defaults to extractFraction. 中文：非短期池抽样比例。"
       },
       "maxInjectChars": {
         "type": "number",
-        "description": "单次注入 prependContext 的最大字符数（防止撑爆上下文）",
+        "description": "Max characters for a single prependContext inject (guardrail). 中文：单次注入最大字符数。",
         "default": 12000
       },
       "dreamingPipelineScheduleEnabled": {
         "type": "boolean",
-        "description": "是否在网关进程内按 cron 定时运行 dreaming-pipeline（predream + story-word-sentence，会调用 LLM）。默认 false，需显式 true",
+        "description": "Run dreaming-pipeline on a cron inside the gateway (predream + story; calls LLM). Default false. 中文：网关内定时发梦，默认关。",
         "default": false
       },
       "dreamingPipelineDailyAt": {
         "type": "string",
         "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$",
-        "description": "每日触发时间（HH:mm）。不设 dreamingPipelineCron 时由本字段生成 cron；两者都未设时插件内默认 03:00。"
+        "description": "Daily trigger HH:mm. When dreamingPipelineCron is unset, cron is derived from this; plugin default time 03:00 if both unset. 中文：每日 HH:mm 触发发梦。"
       },
       "dreamingPipelineCron": {
         "type": "string",
-        "description": "可选：5 段 cron（优先级高于 dreamingPipelineDailyAt）。一般留空，仅用上面的 HH:mm 即可；不设时不在配置里注入默认 cron。"
+        "description": "Optional 5-field cron (overrides dreamingPipelineDailyAt). Usually leave empty and use HH:mm only. 中文：可选 cron，优先级高于每日时间。"
       },
       "dreamingPipelineTimezone": {
         "type": "string",
-        "description": "IANA 时区（如 Asia/Shanghai）；不设则按运行环境本机时区解释 cron"
+        "description": "IANA timezone (e.g. Asia/Shanghai); omit for system local timezone when interpreting cron. 中文：IANA 时区。"
       },
       "dreamingPipelineMaxWords": {
         "type": "number",
-        "description": "story 段抽词上限，同 CLI dreaming-pipeline --max-words"
+        "description": "Story stage max words (CLI --max-words). 中文：story 段抽词上限。"
       },
       "dreamingPipelineFraction": {
         "type": "number",
-        "description": "story 段抽样比例，同 --fraction"
+        "description": "Story stage sampling fraction (--fraction). 中文：story 段抽样比例。"
       },
       "dreamingPipelineMinRuns": {
         "type": "number",
-        "description": "多轮 story 随机下限，同 --min-runs"
+        "description": "Min random story runs (--min-runs). 中文：多轮 story 下限。"
       },
       "dreamingPipelineMaxRuns": {
         "type": "number",
-        "description": "多轮 story 随机上限，同 --max-runs"
+        "description": "Max random story runs (--max-runs). 中文：多轮 story 上限。"
       },
       "articleWordImportInitialWeight": {
         "type": "integer",
         "minimum": 1,
         "maximum": 1000000,
-        "description": "article-word 新插入 sentences 的初始 weight（写入 config.toml；与 memok-ai MemokPipelineConfig 一致）"
+        "description": "Initial weight for new sentences from article-word (written to config.toml; MemokPipelineConfig). 中文：新插入 sentences 初始 weight。"
       },
       "articleWordImportInitialDuration": {
         "type": "integer",
         "minimum": 1,
         "maximum": 1000000,
-        "description": "新插入 sentences 的初始 duration（写入 config.toml）"
+        "description": "Initial duration for new sentences (written to config.toml). 中文：新插入 duration。"
       },
       "dreamShortTermToLongTermWeightThreshold": {
         "type": "integer",
         "minimum": 1,
         "maximum": 100000,
-        "description": "predream 短期句升为长期的最小 weight 阈值（写入 config.toml；核心默认 7）"
+        "description": "Predream threshold: short-term rows with weight ≥ this promote to long-term (written to config.toml; core default 7). 中文：短期升长期 weight 阈值。"
       }
     }
   }

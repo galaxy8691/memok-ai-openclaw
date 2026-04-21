@@ -14,7 +14,7 @@ import {
 const MEMORY_CANDIDATE_TTL_MS = 30 * 60 * 1000;
 const MEMORY_CANDIDATE_MAP_MAX = 50;
 
-/** sessionKey（或回退键）→ 最近一轮注入的句子 id，供工具校验与日志 */
+/** sessionKey (or fallback) → last injected sentence ids for tool validation and logs */
 export const memoryCandidateIdsBySession = new Map<
   string,
   { ids: number[]; at: number }
@@ -57,19 +57,21 @@ function formatOneMemoryLine(s: MemoryExtractedSentence): string {
   );
   const w = scrubOpenclawHeartbeatArtifacts(mw.word);
   const nw = scrubOpenclawHeartbeatArtifacts(mw.normal_word);
-  return `- [id=${s.id}] ${sentence} (词: ${w} → ${nw})`;
+  return `- [id=${s.id}] ${sentence} (word 词: ${w} → ${nw})`;
 }
 
 /**
- * 生成 prependContext；按条累加直至达到 maxChars（至少尽量放入第一条）。
+ * Build prependContext block; append lines until maxChars (best-effort keep first line).
  */
 function buildMemoryInjectBlock(
   sentences: MemoryExtractedSentence[],
   maxChars: number,
 ): { text: string; ids: number[]; truncated: boolean } {
-  const header = `${MEMOK_MEMORY_INJECT_MARKER}以下为从本地记忆库抽样得到的句子，**未必与当前问题相关**。
-请自行判断是否采用；若采用请在回复中自然使用这些信息。
-若确实采用了其中某些条目，请在本轮内调用工具 \`memok_report_used_memory_ids\`，传入对应 \`id\` 数组；若全部未采用则**不要调用**该工具。
+  const header = `${MEMOK_MEMORY_INJECT_MARKER}Below are randomly sampled lines from the local memory DB; they **may not** relate to the current question.
+Decide whether to use them naturally in your reply.
+If you use any item, call \`memok_report_used_memory_ids\` this turn with the matching \`id\` list; if you use none, **do not** call that tool.
+
+中文：以下为本地记忆库抽样句子，未必与当前问题相关；采用后请在本轮调用 memok_report_used_memory_ids 上报 id，未采用请勿调用。
 
 `;
 
@@ -104,7 +106,7 @@ export type RecallStoreResult =
   | { kind: "block"; text: string; ids: number[]; truncated: boolean };
 
 /**
- * 抽样并写入本轮 session 的候选 id，供 prepend / 工具 / 反馈校验共用。
+ * Sample candidates and store this round's ids for prepend / tools / feedback.
  */
 export function recallAndStoreCandidates(
   pipeline: MemokPipelineConfig,

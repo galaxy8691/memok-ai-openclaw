@@ -1,9 +1,10 @@
-/** 旧版注入标题（无定界符）；落库时仍尝试剥离，兼容历史消息。 */
+/** Legacy inject title (no delimiters); still stripped on persist for old transcripts. */
 export const MEMOK_MEMORY_INJECT_MARKER = "【memok-ai 候选记忆】";
 
 /**
- * 与 `buildMemoryInjectBlock` 配对：整段候选记忆包在起止标记之间，便于 transcript 落库时整段删除，避免回灌 SQLite。
- * 选用 `@@@` + 固定 token，降低与正文偶然碰撞的概率。
+ * Pairs with `buildMemoryInjectBlock`: candidate block is wrapped so the full span can be removed before persist,
+ * avoiding feeding injected recall text back into SQLite.
+ * Uses `@@@` + fixed tokens to reduce accidental collisions with user text.
  */
 export const MEMOK_INJECT_START = "@@@MEMOK_RECALL_START@@@";
 export const MEMOK_INJECT_END = "@@@MEMOK_RECALL_END@@@";
@@ -18,7 +19,7 @@ function stripDelimitedMemokBlocks(text: string): string {
     const afterStart = start + MEMOK_INJECT_START.length;
     const end = out.indexOf(MEMOK_INJECT_END, afterStart);
     if (end === -1) {
-      // 有起点无终点：剥到下一轮对话或文末，避免半段残留
+      // Start without end: strip through next turn boundary or EOF to avoid half blocks
       const tail = out.slice(afterStart);
       const m = /\n\n((?:User|用户):|OpenClaw:)/.exec(tail);
       const cut = m ? start + MEMOK_INJECT_START.length + m.index : out.length;
@@ -32,9 +33,9 @@ function stripDelimitedMemokBlocks(text: string): string {
 }
 
 /**
- * 从 transcript 中移除本插件注入的候选记忆：
- * 1) `@@@MEMOK_RECALL_START@@@` … `@@@MEMOK_RECALL_END@@@` 整段；
- * 2) 旧版从 `【memok-ai 候选记忆】` 到下一轮 `User:`/`用户:`/`OpenClaw:` 之前。
+ * Remove plugin-injected recall text from a transcript:
+ * 1) Full span `@@@MEMOK_RECALL_START@@@` … `@@@MEMOK_RECALL_END@@@`
+ * 2) Legacy: from `【memok-ai 候选记忆】` through the line before next `User:`/`用户:`/`OpenClaw:`
  */
 export function stripMemokInjectEchoFromTranscript(text: string): string {
   let out = stripDelimitedMemokBlocks(text);

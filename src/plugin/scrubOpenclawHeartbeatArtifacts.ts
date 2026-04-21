@@ -1,20 +1,20 @@
 /**
- * 剥离 OpenClaw 网关常见的心跳 / 定时提醒模板（易随对话写入记忆库，下一轮又注入，误触 HEARTBEAT_OK 等语义）。
- * 在子串断字之前执行。
+ * Strip common OpenClaw gateway heartbeat / reminder templates so they are not persisted
+ * into Memok or re-injected (avoids accidental HEARTBEAT_OK semantics). Run before zero-width breaking of leftover tokens.
  */
 function scrubOpenclawHeartbeatTemplates(text: string): string {
   let s = text;
-  // 英文默认心跳指令（整段；允许贴在文首无前置换行）
+  // Default English heartbeat instruction block (may start without a leading newline)
   s = s.replace(
     /(^|[\r\n])\s*Read HEARTBEAT\.md if it exists \(workspace context\)\. Follow it strictly\. Do not infer or repeat old tasks from prior chats\. If nothing needs attention, reply HEARTBEAT_OK\.\s*/gim,
     "\n",
   );
-  // 定时提醒：从触发句到 workspace 路径说明（含中间「提醒正文」）
+  // Scheduled reminder block from trigger through workspace HEARTBEAT.md line
   s = s.replace(
     /(^|[\r\n])\s*A scheduled reminder has been triggered\.[\s\S]*?When reading HEARTBEAT\.md, use workspace file[^\n]*\s*/gim,
     "\n",
   );
-  // 单独出现的 workspace 路径行 / 勿读文档行 / 内部处理说明
+  // Standalone workspace / do-not-read / internal reminder lines
   s = s.replace(
     /(^|[\r\n])\s*When reading HEARTBEAT\.md, use workspace file[^\n]*\s*/gim,
     "\n",
@@ -25,20 +25,20 @@ function scrubOpenclawHeartbeatTemplates(text: string): string {
     "\n",
   );
   s = s.replace(/(^|[\r\n])\s*The reminder content is:\s*/gim, "\n");
-  // 中文「执行 HEARTBEAT.md 检查清单」整块（可含多行 System: 前缀列表）
+  // Chinese HEARTBEAT checklist block (keep regex; legacy gateway copy)
   s = s.replace(
     /执行 HEARTBEAT\.md 检查清单[：:][\s\S]*?完成后报告结果。\s*/g,
     "",
   );
-  // 去掉孤立的 `System:` 空行噪声
+  // Drop orphan empty `System:` noise lines
   s = s.replace(/(^|[\r\n])System:\s*(?=[\r\n]|$)/g, "\n");
   s = s.replace(/\n{3,}/g, "\n\n");
   return s.trim();
 }
 
 /**
- * OpenClaw 对 `HEARTBEAT_OK`、`HEARTBEAT.md` 及心跳轮次有特殊语义；
- * 正文若含相同子串，易在下游（插件 / 网关）被误触发。先删模板再对残留子串断字。
+ * OpenClaw treats `HEARTBEAT_OK`, `HEARTBEAT.md`, and heartbeat rounds specially; strip templates first,
+ * then break remaining substrings so downstream handlers are not triggered by normal text.
  */
 export function scrubOpenclawHeartbeatArtifacts(text: string): string {
   let t = scrubOpenclawHeartbeatTemplates(text);

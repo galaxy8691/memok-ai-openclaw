@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# 部分环境下 openclaw 子进程会等 stdin；将 stdin 接到控制终端可减少「已显示 Installed plugin 却仍卡住」。
+# Some environments: openclaw child waits on stdin; attach stdin to controlling TTY to avoid "Installed plugin" then hang.
 if [ -r /dev/tty ]; then
   exec < /dev/tty || true
 fi
 
 # China-optimized installer:
-# - Default clone source: Gitee (中文镜像与境内线路)
-# - Override with MEMOK_REPO_URL_CN; fallback with MEMOK_REPO_URL_FALLBACK (default GitHub)
-# - Use npm mirror registry by default
+# - Default clone: Gitee (mirror / CN-friendly). 中文：默认 Gitee。
+# - Override: MEMOK_REPO_URL_CN; fallback: MEMOK_REPO_URL_FALLBACK (default GitHub)
+# - npm install uses mirror registry by default
 
 REPO_URL_CN="${MEMOK_REPO_URL_CN:-https://gitee.com/wik20/memok-ai-openclaw.git}"
 REPO_URL_FALLBACK="${MEMOK_REPO_URL_FALLBACK:-https://github.com/galaxy8691/memok-ai-openclaw.git}"
 TARGET_DIR="${MEMOK_INSTALL_DIR:-$HOME/.openclaw/extensions/memok-ai-openclaw-src}"
 NPM_REGISTRY="${MEMOK_NPM_REGISTRY:-https://registry.npmmirror.com}"
 
-# 可选：用 coreutils 的 timeout 限制命令运行时间（若已安装）。
+# Optional: coreutils `timeout` caps command duration when installed.
 run_with_timeout() {
   local seconds="$1"
   shift
@@ -27,31 +27,31 @@ run_with_timeout() {
   fi
 }
 
-# OpenClaw 可能已打印 Installed plugin 仍未退出；Linux 下用 script 提供伪终端。MEMOK_PLUGINS_INSTALL_NO_PTY=1 则直接执行 openclaw。
+# OpenClaw may print Installed plugin but not exit; on Linux use `script` for a PTY unless MEMOK_PLUGINS_INSTALL_NO_PTY=1.
 run_openclaw_plugins_install() {
   local dir="$1"
   if [ "${MEMOK_PLUGINS_INSTALL_NO_PTY:-0}" != "1" ] && [ "$(uname -s)" = Linux ] && command -v script >/dev/null 2>&1; then
-    echo "[memok-ai cn installer] 正在通过伪终端安装插件（Linux，可减轻最后一行日志后卡住）…"
+    echo "[memok-ai cn installer] Installing plugin via pseudo-TTY (Linux; reduces hang after last log). (中文：伪终端安装)"
     script -qec "openclaw plugins install $(printf %q "$dir")" /dev/null
   else
     openclaw plugins install "$dir"
   fi
 }
 
-# setup 之后扩展目录里已有插件（目录名 = openclaw.plugin.json 的 id，当前为 memok-ai）；再次 `plugins install` 会报已存在。
-# 只同步构建产物与清单，保留 memok.sqlite、.env、node_modules。
+# After setup the extension dir already exists (name = openclaw.plugin.json id, currently memok-ai); re-run plugins install would error.
+# Sync only build outputs + manifest; keep memok.sqlite, .env, node_modules.
 sync_memok_installed_plugin_from_source() {
   local src="$1"
   local name dest
-  # 与 OpenClaw 一致：扩展目录名来自 openclaw.plugin.json 的 id（当前为 memok-ai），不是 package.json 的 name。
+  # Extension dir name follows openclaw.plugin.json id (memok-ai), not package.json name.
   name="$(cd "$src" && node -p "(() => { const fs=require('fs'); const o=JSON.parse(fs.readFileSync('openclaw.plugin.json','utf8')); const id=o&&o.id&&String(o.id).trim(); return id||require('./package.json').name; })()")"
   dest="$(dirname "$src")/$name"
   if [ ! -d "$dest" ] || [ ! -f "$dest/package.json" ]; then
-    echo "[memok-ai cn installer] 未找到已安装目录 $dest ，改为执行 openclaw plugins install…"
+    echo "[memok-ai cn installer] Installed dir not found at $dest; running openclaw plugins install… (中文：未找到已安装目录)"
     run_openclaw_plugins_install "$src"
     return
   fi
-  echo "[memok-ai cn installer] 正在将 dist/、openclaw.plugin.json、skills/ 同步到 $dest …"
+  echo "[memok-ai cn installer] Syncing dist/, openclaw.plugin.json, skills/ to $dest … (中文：同步构建产物)"
   rm -rf "$dest/dist"
   cp -a "$src/dist" "$dest/"
   cp -f "$src/openclaw.plugin.json" "$dest/"
@@ -66,36 +66,36 @@ sync_memok_installed_plugin_from_source() {
 
 restart_gateway_end() {
   if [ "${MEMOK_SKIP_GATEWAY_RESTART:-0}" = "1" ]; then
-    echo "[memok-ai cn installer] 已跳过网关重启（MEMOK_SKIP_GATEWAY_RESTART=1）；需要时请自行执行: openclaw gateway restart"
+    echo "[memok-ai cn installer] Skipped gateway restart (MEMOK_SKIP_GATEWAY_RESTART=1). Run: openclaw gateway restart (中文：已跳过重启)"
     return 0
   fi
   local gw_timeout="${MEMOK_GATEWAY_RESTART_TIMEOUT_SECONDS:-120}"
-  echo "[memok-ai cn installer] 正在重启 OpenClaw 网关以使配置生效…"
+  echo "[memok-ai cn installer] Restarting OpenClaw gateway… (中文：正在重启网关)"
   if run_with_timeout "$gw_timeout" openclaw gateway restart; then
     return 0
   fi
   if run_with_timeout "$gw_timeout" openclaw restart; then
     return 0
   fi
-  echo "[memok-ai cn installer] 警告：网关重启失败或超时（${gw_timeout}s），请手动执行: openclaw gateway restart" >&2
+  echo "[memok-ai cn installer] Warning: gateway restart failed or timed out (${gw_timeout}s). Run manually: openclaw gateway restart (中文：重启失败)" >&2
   return 1
 }
 
 need_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
-    echo "[memok-ai cn installer] 缺少必要命令: $1" >&2
+    echo "[memok-ai cn installer] Missing required command: $1 (中文：缺少命令)" >&2
     exit 1
   fi
 }
 
 cleanup_source_dir() {
   if [ "${MEMOK_KEEP_SOURCE:-0}" = "1" ]; then
-    echo "[memok-ai cn installer] 保留源码目录: $TARGET_DIR（MEMOK_KEEP_SOURCE=1）"
+    echo "[memok-ai cn installer] Keeping source dir: $TARGET_DIR (MEMOK_KEEP_SOURCE=1) (中文：保留源码)"
     return
   fi
   if [ -d "$TARGET_DIR" ]; then
     rm -rf "$TARGET_DIR"
-    echo "[memok-ai cn installer] 已删除源码目录: $TARGET_DIR"
+    echo "[memok-ai cn installer] Removed source dir: $TARGET_DIR (中文：已删源码目录)"
   fi
 }
 
@@ -104,9 +104,9 @@ clone_or_update_repo() {
   local fallback="$2"
 
   if [ -d "$TARGET_DIR/.git" ]; then
-    echo "[memok-ai cn installer] 正在从已配置的远程更新源码…"
+    echo "[memok-ai cn installer] Updating source from configured remote… (中文：更新源码)"
     if ! git -C "$TARGET_DIR" fetch --depth=1 "$primary" main; then
-      echo "[memok-ai cn installer] 主源更新失败，尝试备用源…"
+      echo "[memok-ai cn installer] Primary fetch failed; trying fallback… (中文：主源失败，试备用)"
       git -C "$TARGET_DIR" fetch --depth=1 "$fallback" main
     fi
     git -C "$TARGET_DIR" checkout -f FETCH_HEAD
@@ -115,9 +115,9 @@ clone_or_update_repo() {
 
   rm -rf "$TARGET_DIR"
   mkdir -p "$(dirname "$TARGET_DIR")"
-  echo "[memok-ai cn installer] 正在从主源克隆…"
+  echo "[memok-ai cn installer] Cloning from primary… (中文：主源克隆)"
   if ! git clone --depth=1 "$primary" "$TARGET_DIR"; then
-    echo "[memok-ai cn installer] 主源克隆失败，改用备用源…"
+    echo "[memok-ai cn installer] Primary clone failed; using fallback… (中文：改用备用源)"
     git clone --depth=1 "$fallback" "$TARGET_DIR"
   fi
 }
@@ -127,44 +127,44 @@ need_cmd openclaw
 need_cmd npm
 need_cmd node
 
-echo "[memok-ai cn installer] 克隆/更新源码…"
+echo "[memok-ai cn installer] Clone/update source… (中文：克隆/更新)"
 clone_or_update_repo "$REPO_URL_CN" "$REPO_URL_FALLBACK"
 
-# 核心库已发布到 npm（依赖名 memok-ai）。本脚本用境内 registry 安装即可。
-# 若必须从 Git 安装核心（离线/镜像未同步），设置 MEMOK_CORE_GIT_URL（可选 MEMOK_CORE_GIT_REF，默认 v0.1.0）。
+# Core `memok-ai` is on npm; this script uses the mirror registry by default.
+# For Git-based core (offline / mirror lag), set MEMOK_CORE_GIT_URL (optional MEMOK_CORE_GIT_REF, default v0.1.0).
 patch_memok_core_dependency_optional_git() {
   local prefix="$1"
   local ref="${MEMOK_CORE_GIT_REF:-v0.1.0}"
   if [ -z "${MEMOK_CORE_GIT_URL:-}" ]; then
     return
   fi
-  echo "[memok-ai cn installer] MEMOK_CORE_GIT_URL 已设置 — memok-ai -> git+${MEMOK_CORE_GIT_URL}#${ref}"
+  echo "[memok-ai cn installer] MEMOK_CORE_GIT_URL set — memok-ai -> git+${MEMOK_CORE_GIT_URL}#${ref} (中文：核心改 Git 源)"
   npm --prefix "$prefix" pkg set "dependencies.memok-ai=git+${MEMOK_CORE_GIT_URL}#${ref}"
 }
 
 patch_memok_core_dependency_optional_git "$TARGET_DIR"
 
-echo "[memok-ai cn installer] 正在构建插件（registry: $NPM_REGISTRY）…"
+echo "[memok-ai cn installer] Building plugin (registry: $NPM_REGISTRY)… (中文：构建)"
 npm --prefix "$TARGET_DIR" install --registry "$NPM_REGISTRY" --prefer-offline --no-audit --progress=false
 npm --prefix "$TARGET_DIR" run build
 
-echo "[memok-ai cn installer] 正在通过 OpenClaw 安装插件（可能较久；请与下方本脚本提示区分）…"
-echo "[memok-ai cn installer] 若 OpenClaw 已显示 Installed plugin，却迟迟不出现「插件安装步骤已完成」，多为 CLI 未退出；可试 MEMOK_PLUGINS_INSTALL_NO_PTY=1，或 Ctrl+C 后执行: openclaw memok setup"
+echo "[memok-ai cn installer] Running openclaw plugins install (may take a while)… (中文：安装插件)"
+echo "[memok-ai cn installer] If OpenClaw printed Installed plugin but this step never finishes, the CLI may be stuck; try MEMOK_PLUGINS_INSTALL_NO_PTY=1 or Ctrl+C then: openclaw memok setup (中文：卡住时可试 NO_PTY)"
 plugins_to="${MEMOK_PLUGINS_INSTALL_TIMEOUT_SECONDS:-0}"
 if [ "$plugins_to" -gt 0 ] 2>/dev/null; then
-  echo "[memok-ai cn installer] 插件安装最长等待 ${plugins_to} 秒（MEMOK_PLUGINS_INSTALL_TIMEOUT_SECONDS；不设或为 0 表示不限制）"
+  echo "[memok-ai cn installer] plugins install timeout: ${plugins_to}s (MEMOK_PLUGINS_INSTALL_TIMEOUT_SECONDS; 0 = no limit) (中文：安装超时)"
   if ! run_with_timeout "$plugins_to" bash -c "$(declare -f run_openclaw_plugins_install); run_openclaw_plugins_install \"\$1\"" _ "$TARGET_DIR"; then
-    echo "[memok-ai cn installer] 错误：openclaw plugins install 失败或超时。" >&2
-    echo "[memok-ai cn installer] 可手动执行: openclaw plugins install \"$TARGET_DIR\"" >&2
+    echo "[memok-ai cn installer] Error: openclaw plugins install failed or timed out. (中文：安装失败)" >&2
+    echo "[memok-ai cn installer] Manual: openclaw plugins install \"$TARGET_DIR\"" >&2
     exit 1
   fi
 else
   run_openclaw_plugins_install "$TARGET_DIR"
 fi
 
-echo "[memok-ai cn installer] 插件安装步骤已完成；接下来：memok 交互配置（完成后将尝试自动重启网关）。"
+echo "[memok-ai cn installer] Plugin install done; next: openclaw memok setup (then gateway restart). (中文：接下来运行 setup)"
 
-echo "[memok-ai cn installer] 正在运行交互式配置…"
+echo "[memok-ai cn installer] Running interactive setup… (中文：交互配置)"
 # Do NOT capture stdout/stderr: `openclaw memok setup` uses readline prompts; command substitution
 # would hide all questions and look like a hang while still waiting for stdin.
 set +e
@@ -173,14 +173,14 @@ SETUP_STATUS=$?
 set -e
 
 if [ $SETUP_STATUS -ne 0 ]; then
-  echo "[memok-ai cn installer] 配置命令退出，状态码: ${SETUP_STATUS}"
-  echo "[memok-ai cn installer] 提示：若提示未知 memok 命令，请将 OpenClaw 升级到 >= 2026.3.24；"
-  echo "[memok-ai cn installer] 若被 plugins.allow 拦截，请在 ~/.openclaw/openclaw.json 的 plugins.allow 中加入 \"memok\""
-  echo "[memok-ai cn installer] 请手动执行: openclaw memok setup"
+  echo "[memok-ai cn installer] Setup exited with status: ${SETUP_STATUS} (中文：setup 退出码)"
+  echo "[memok-ai cn installer] If memok is unknown, upgrade OpenClaw to >= 2026.3.24. (中文：升级网关)"
+  echo "[memok-ai cn installer] If blocked by plugins.allow, add \"memok\" under plugins.allow in ~/.openclaw/openclaw.json"
+  echo "[memok-ai cn installer] Run manually: openclaw memok setup"
   exit $SETUP_STATUS
 fi
 
-echo "[memok-ai cn installer] setup 已完成；正在再次 build 并同步到已安装扩展目录（无需再次 plugins install）…"
+echo "[memok-ai cn installer] Setup OK; rebuilding and syncing to installed extension (no second plugins install). (中文：同步已安装目录)"
 npm --prefix "$TARGET_DIR" run build
 sync_memok_installed_plugin_from_source "$TARGET_DIR"
 
@@ -191,4 +191,4 @@ restart_gateway_end
 set -e
 
 echo
-echo "[memok-ai cn installer] 全部完成。"
+echo "[memok-ai cn installer] All done. (中文：全部完成)"

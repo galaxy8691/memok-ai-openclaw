@@ -28,7 +28,8 @@ import {
 export default definePluginEntry({
   id: "memok-ai",
   name: "Memok AI Memory",
-  description: "自动保存 OpenClaw 对话到 memok-ai 记忆系统",
+  description:
+    "Persist OpenClaw chats to the memok-ai memory system. 中文：将 OpenClaw 对话写入 memok-ai 记忆库。",
 
   register(api: any) {
     api.registerCli(
@@ -67,17 +68,17 @@ export default definePluginEntry({
             }
             console.log(
               [
-                "[memok-ai] setup 完成：已写入 plugins.entries.memok-ai.config",
+                "[memok-ai] setup complete: wrote plugins.entries.memok-ai.config",
                 `- llmProvider=${answers.llmProvider}`,
-                `- model=${answers.llmModel?.trim() ? answers.llmModel.trim() : (answers.llmModelPreset ?? "(未设置)")}`,
-                "- plugins.slots.memory=memok-ai（向导固定独占 memory 槽）",
+                `- model=${answers.llmModel?.trim() ? answers.llmModel.trim() : (answers.llmModelPreset ?? "(unset)")}`,
+                "- plugins.slots.memory=memok-ai (wizard pins the memory slot)",
                 `- dreamingSchedule=${answers.dreamingPipelineScheduleEnabled ? `on @ ${answers.dreamingPipelineDailyAt ?? "03:00"}` : "off"}`,
                 copiedFromClean
-                  ? `- 已从 ${cleanPath} 复制初始库到 ${dbPath}`
-                  : `- 未找到 ${cleanPath}，跳过初始库复制`,
-                `- Memok 管线配置: ${tomlPath}`,
+                  ? `- copied seed DB from ${cleanPath} to ${dbPath}`
+                  : `- no ${cleanPath}; skipped seed DB copy`,
+                `- Memok pipeline config: ${tomlPath}`,
                 "",
-                "请重启 gateway 使新配置生效。",
+                "Restart the gateway for changes to take effect. 中文：请重启网关使配置生效。",
               ].join("\n"),
             );
           });
@@ -93,11 +94,11 @@ export default definePluginEntry({
         const first = (ctx.args ?? "").trim().split(/\s+/)[0] ?? "";
         if (first === "setup") {
           return {
-            text: "请在网关终端执行 `openclaw memok setup` 进入交互式向导（供应商/API Key/模型/发梦时间）。",
+            text: "Run `openclaw memok setup` in the gateway terminal for the interactive wizard (provider / API key / model / dreaming). 中文：请在网关终端执行该命令完成向导。",
           };
         }
         return {
-          text: "用法：`/memok setup`（提示终端执行 `openclaw memok setup`）",
+          text: "Usage: `/memok setup` — then run `openclaw memok setup` in the terminal. 中文：用法见上，终端内执行 openclaw memok setup。",
         };
       },
     });
@@ -132,7 +133,7 @@ export default definePluginEntry({
     } as MemokConfig;
 
     if (entry?.enabled === false || pluginCfg.enabled === false) {
-      api.logger?.info("[memok-ai] 已禁用");
+      api.logger?.info("[memok-ai] plugin disabled (中文：插件已禁用)");
       return;
     }
 
@@ -144,7 +145,7 @@ export default definePluginEntry({
       (pluginCfg.llmModelPreset ?? "").trim()
     ) {
       api.logger?.info(
-        "[memok-ai] 已根据插件配置尝试补齐 OPENAI_API_KEY / OPENAI_BASE_URL / MEMOK_LLM_MODEL（不覆盖已存在的环境变量）",
+        "[memok-ai] filled missing OPENAI_API_KEY / OPENAI_BASE_URL / MEMOK_LLM_MODEL from plugin config where unset (中文：已按插件配置补缺环境变量，不覆盖已有值)",
       );
     }
 
@@ -162,7 +163,7 @@ export default definePluginEntry({
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       api.logger?.error?.(
-        `[memok-ai] ${msg}。请修正 openclaw.json 中的 dbPath 或重新运行 openclaw memok setup。`,
+        `[memok-ai] ${msg} Fix dbPath in openclaw.json or rerun openclaw memok setup. (中文：请修正 dbPath 或重新运行 setup)`,
       );
       return;
     }
@@ -177,24 +178,26 @@ export default definePluginEntry({
       memoryRecallMode = rawMode;
     } else {
       api.logger?.warn?.(
-        `[memok-ai] 未知 memoryRecallMode=${String(rawMode)}，按 skill 处理`,
+        `[memok-ai] unknown memoryRecallMode=${String(rawMode)}; using skill. (中文：未知模式，按 skill 处理)`,
       );
       memoryRecallMode = "skill";
     }
     const extractFraction = pluginCfg.extractFraction ?? 0.2;
     const longTermFraction = pluginCfg.longTermFraction ?? extractFraction;
     const maxInjectChars = Math.max(512, pluginCfg.maxInjectChars ?? 12_000);
-    api.logger?.info(`[memok-ai] 已启用，数据库: ${dbPath}`);
+    api.logger?.info(
+      `[memok-ai] enabled, database: ${dbPath} (中文：已启用，数据库见上)`,
+    );
     if (memoryInjectEnabled) {
       api.logger?.info(
-        `[memok-ai] 记忆召回: mode=${memoryRecallMode}, fraction=${extractFraction}, longTermFraction=${longTermFraction}, maxInjectChars=${maxInjectChars}`,
+        `[memok-ai] recall: mode=${memoryRecallMode}, fraction=${extractFraction}, longTermFraction=${longTermFraction}, maxInjectChars=${maxInjectChars} (中文：记忆召回参数)`,
       );
     }
     const persistTranscriptToMemory =
       pluginCfg.persistTranscriptToMemory !== false;
     if (pluginCfg.persistTranscriptToMemory === false) {
       api.logger?.info(
-        "[memok-ai] persistTranscriptToMemory 已显式关闭，对话不会写入 SQLite（仅注入/工具反馈仍可用）。",
+        "[memok-ai] persistTranscriptToMemory=false: transcripts are not written to SQLite; recall/tools still work. (中文：已关闭对话落库)",
       );
     }
 

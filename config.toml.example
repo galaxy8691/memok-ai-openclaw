@@ -1,28 +1,29 @@
-# Memok 管线配置示例（MemokPipelineConfig）
-# 实际路径由 OpenClaw 插件写入：~/.openclaw/extensions/memok-ai/config.toml
-# 生成方式：在网关环境执行 `openclaw memok setup`（向导会合并 openclaw.json 中的可选项并写本文件）
-# 请勿将含真实密钥的文件提交到 git；复制本示例后替换占位值
+# Example Memok pipeline config (MemokPipelineConfig)
+# Live path (written by the plugin): ~/.openclaw/extensions/memok-ai/config.toml
+# Generate: run `openclaw memok setup` in the gateway environment (merges optional keys from openclaw.json).
+# Do not commit real secrets; copy this file and replace placeholders.
+# 中文：示例配置；真实路径见上，向导可生成。
 
-# --- 必填 ---
+# --- Required ---
 dbPath = "~/.openclaw/extensions/memok-ai/memok.sqlite"
 openaiApiKey = "REPLACE_ME"
 llmModel = "gpt-4o-mini"
 
-# --- 常用必填数值（与向导默认值一致；可按需改）---
+# --- Common required numbers (wizard defaults; adjust as needed) ---
 llmMaxWorkers = 1
 articleSentencesMaxOutputTokens = 8192
 coreWordsNormalizeMaxOutputTokens = 32768
 sentenceMergeMaxCompletionTokens = 2048
 
-# --- 可选：OpenAI 兼容网关 Base URL（智谱 / DeepSeek / 自建等）；不设则用 SDK 默认 ---
+# --- Optional: OpenAI-compatible Base URL (Zhipu / DeepSeek / self-hosted); omit for SDK default ---
 # openaiBaseUrl = "https://api.openai.com/v1"
 
-# --- 可选：跳过部分 LLM 结构化解析（布尔；默认 false）---
+# --- Optional: skip some LLM structured parsing (boolean; default false) ---
 # skipLlmStructuredParse = false
 
-# --- 可选：article-word 新插入 sentences 的初始 weight / duration（正整数；省略则由 memok-ai 默认）---
+# --- Optional: initial weight / duration for new sentences from article-word (positive int; omit for memok-ai defaults) ---
 # articleWordImportInitialWeight = 1
 # articleWordImportInitialDuration = 7
 
-# --- 可选：predream 中短期句升为长期的最小 weight 阈值（正整数；省略则核心默认 7）---
+# --- Optional: predream short→long-term minimum weight threshold (positive int; core default 7) ---
 # dreamShortTermToLongTermWeightThreshold = 7

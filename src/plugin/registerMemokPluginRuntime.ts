@@ -63,7 +63,7 @@ export function registerMemokPluginRuntime(
   if (pluginCfg.dreamingPipelineScheduleEnabled === true) {
     if (isMemokSetupCliRun()) {
       api.logger?.info(
-        "[memok-ai] 检测到 `openclaw memok setup` 交互流程，跳过 dreaming cron 注册以避免 CLI 进程常驻。",
+        "[memok-ai] `openclaw memok setup` detected; skipping dreaming cron so the CLI can exit. (中文：setup 流程不注册发梦定时)",
       );
     } else {
       const rawCron =
@@ -123,7 +123,7 @@ export function registerMemokPluginRuntime(
     savedKeys.add(dedupeKey);
     if (!persistTranscriptToMemory) {
       api.logger?.debug?.(
-        `[memok-ai] 跳过写入 SQLite (${source})，len=${stripped.length}`,
+        `[memok-ai] skip SQLite write (${source}), len=${stripped.length} (中文：已跳过落库)`,
       );
       return;
     }
@@ -136,16 +136,20 @@ export function registerMemokPluginRuntime(
       // ignore debug dump failures
     }
     api.logger?.info(
-      `[memok-ai] 输入调试 (${source}): len=${stripped.length}, file=${debugFile}, prefix=${JSON.stringify(oneLineSnippet(stripped.slice(0, 500), 260))}, suffix=${JSON.stringify(oneLineSnippet(stripped.slice(-500), 260))}`,
+      `[memok-ai] persist debug (${source}): len=${stripped.length}, file=${debugFile}, prefix=${JSON.stringify(oneLineSnippet(stripped.slice(0, 500), 260))}, suffix=${JSON.stringify(oneLineSnippet(stripped.slice(-500), 260))}`,
     );
-    api.logger?.info(`[memok-ai] 记忆管线开始 (${source})…`);
+    api.logger?.info(
+      `[memok-ai] articleWordPipeline starting (${source})… (中文：记忆管线开始)`,
+    );
     try {
       await articleWordPipeline(stripped, pipeline);
-      api.logger?.info(`[memok-ai] 记忆已保存 (${source})`);
+      api.logger?.info(
+        `[memok-ai] memory saved (${source}). (中文：记忆已保存)`,
+      );
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
       api.logger?.error(
-        `[memok-ai] 保存记忆失败 (${source}): ${msg}; input_file=${debugFile}; input_len=${stripped.length}`,
+        `[memok-ai] persist failed (${source}): ${msg}; input_file=${debugFile}; input_len=${stripped.length} (中文：保存失败)`,
       );
       savedKeys.delete(dedupeKey);
     }
@@ -168,7 +172,7 @@ export function registerMemokPluginRuntime(
           }
           if (r.truncated) {
             api.logger?.info(
-              `[memok-ai] 记忆注入已截断: session=${sessionMemKey}, ids=${r.ids.length}, maxInjectChars=${maxInjectChars}`,
+              `[memok-ai] recall truncated: session=${sessionMemKey}, ids=${r.ids.length}, maxInjectChars=${maxInjectChars} (中文：注入截断)`,
             );
           }
           api.logger?.info(
@@ -186,23 +190,23 @@ export function registerMemokPluginRuntime(
         );
         if (r.kind === "empty") {
           api.logger?.info(
-            `[memok-ai] before_prompt_build: ${memoryRecallMode} 本轮无候选 session=${sessionMemKey}`,
+            `[memok-ai] before_prompt_build: ${memoryRecallMode} no candidates session=${sessionMemKey} (中文：本轮无候选)`,
           );
           if (useSkillHint) {
             return {
               prependContext:
-                "（memok）本轮未抽到候选记忆句；若需再试可调工具 memok_recall_candidate_memories。",
+                "(memok) No candidate memories this turn; call `memok_recall_candidate_memories` to resample. 中文：本轮无候选，可调用该工具再抽样。",
             };
           }
           return;
         }
         if (r.truncated) {
           api.logger?.info(
-            `[memok-ai] ${memoryRecallMode} 系统上下文注入已截断: session=${sessionMemKey}, ids=${r.ids.length}, maxInjectChars=${maxInjectChars}`,
+            `[memok-ai] ${memoryRecallMode} system-context recall truncated: session=${sessionMemKey}, ids=${r.ids.length}, maxInjectChars=${maxInjectChars} (中文：系统上下文注入截断)`,
           );
         }
         const skillLead =
-          "（memok）以下为每轮自动附带的候选记忆（系统上下文，非用户消息区 prepend）。请遵循技能 memok-memory 阅读定界块内条目并自行判断是否采用；采用后请调用 memok_report_used_memory_ids 上报 id。\n\n";
+          "(memok) Candidate memories below are attached in **system context** (not user prepend). Follow skill `memok-memory` inside the delimiters; if you use any line, call `memok_report_used_memory_ids` with its ids.\n\n中文：以下为系统侧候选记忆；采用后请上报 id。\n\n";
         const appendSystemContext = `${skillLead}${r.text}`;
         api.logger?.info(
           `[memok-ai] before_prompt_build: appendSystemContext recall chars=${appendSystemContext.length} session=${sessionMemKey}${useSkillHint ? " +prependHint" : ""}`,
@@ -211,13 +215,15 @@ export function registerMemokPluginRuntime(
           return {
             appendSystemContext,
             prependContext:
-              "（memok）完整候选在**系统上下文**定界块内；同轮再抽样请调 `memok_recall_candidate_memories`；采用后请 `memok_report_used_memory_ids`。",
+              "(memok) Full list is in **system context** delimiters; resample with `memok_recall_candidate_memories`; report with `memok_report_used_memory_ids`. 中文：完整列表在系统上下文定界块内。",
           };
         }
         return { appendSystemContext };
       } catch (error: unknown) {
         const msg = error instanceof Error ? error.message : String(error);
-        api.logger?.warn?.(`[memok-ai] 记忆召回前置处理跳过: ${msg}`);
+        api.logger?.warn?.(
+          `[memok-ai] before_prompt_build recall skipped: ${msg} (中文：召回前置跳过)`,
+        );
       }
     });
   }
@@ -225,13 +231,13 @@ export function registerMemokPluginRuntime(
   if (memoryInjectEnabled) {
     const recallDescription =
       memoryRecallMode === "prepend"
-        ? "从 memok SQLite 图库抽样候选记忆句（与技能 memok-memory 配合）。prepend 模式下载入前通常已自动注入一批候选；若需在本轮中重新抽样可调用。返回文本含 [id=…] 与定界块。"
-        : "skill / skill+hint 下网关已在每轮 before_prompt_build 把最新候选写入 appendSystemContext；若**同一轮内**需要再抽样一次可调用。返回文本含 [id=…] 与定界块，并会刷新本轮候选 id。";
+        ? "Sample candidate memory lines from memok SQLite (skill `memok-memory`). In prepend mode a batch is usually injected before load; call again to resample. Returns `[id=…]` lines inside delimiters. 中文：prepend 下可再调用以重新抽样。"
+        : "Each turn, the gateway injects the latest candidates into `appendSystemContext` before `before_prompt_build`. Call to resample **within the same turn**. Returns `[id=…]` lines and refreshes round candidate ids. 中文：同轮内需再抽样时调用。";
     api.registerTool(
       (toolCtx: any) => {
         return {
           name: "memok_recall_candidate_memories",
-          label: "Memok 召回候选记忆",
+          label: "Memok recall candidates",
           description: recallDescription,
           parameters: RecallCandidateMemoriesParams,
           async execute(_toolCallId: any, _params: Record<string, never>) {
@@ -250,7 +256,7 @@ export function registerMemokPluginRuntime(
                   content: [
                     {
                       type: "text" as const,
-                      text: "（memok）当前抽样未得到候选记忆句。",
+                      text: "(memok) No candidate sentences from this sample. 中文：当前抽样无候选。",
                     },
                   ],
                   details: { sentenceIds: [] as number[], empty: true },
@@ -258,7 +264,7 @@ export function registerMemokPluginRuntime(
               }
               if (r.truncated) {
                 api.logger?.info(
-                  `[memok-ai] 工具召回已截断: session=${sessionMemKey}, ids=${r.ids.length}, maxInjectChars=${maxInjectChars}`,
+                  `[memok-ai] tool recall truncated: session=${sessionMemKey}, ids=${r.ids.length}, maxInjectChars=${maxInjectChars} (中文：工具召回截断)`,
                 );
               }
               return {
@@ -269,10 +275,15 @@ export function registerMemokPluginRuntime(
               const msg =
                 error instanceof Error ? error.message : String(error);
               api.logger?.warn?.(
-                `[memok-ai] memok_recall_candidate_memories 失败: ${msg}`,
+                `[memok-ai] memok_recall_candidate_memories failed: ${msg} (中文：召回失败)`,
               );
               return {
-                content: [{ type: "text" as const, text: `召回失败：${msg}` }],
+                content: [
+                  {
+                    type: "text" as const,
+                    text: `Recall failed: ${msg} 中文：召回失败。`,
+                  },
+                ],
                 details: { error: true },
               };
             }
@@ -282,7 +293,7 @@ export function registerMemokPluginRuntime(
       { name: "memok_recall_candidate_memories" },
     );
     api.logger?.info(
-      `[memok-ai] 已注册工具 memok_recall_candidate_memories（memoryRecallMode=${memoryRecallMode}）`,
+      `[memok-ai] registered tool memok_recall_candidate_memories (memoryRecallMode=${memoryRecallMode})`,
     );
   }
 
@@ -291,11 +302,11 @@ export function registerMemokPluginRuntime(
       (toolCtx: any) => {
         const reportDescription =
           memoryRecallMode === "prepend"
-            ? "当你在本轮回复中**确实使用**了 `@@@MEMOK_RECALL_START@@@` … `@@@MEMOK_RECALL_END@@@` 包裹的候选记忆条目时，调用此工具上报所采用句子的数字 id（列表中的 [id=…]）。若未使用任何候选记忆，则不要调用。"
-            : "当你在本轮回复中**确实使用**了系统上下文里自动附带的候选块、或工具 `memok_recall_candidate_memories` 返回文本中的某条候选（[id=…]）时，调用此工具上报所采用句子的数字 id。未采用任何条目则不要调用。";
+            ? "Call when you **actually used** candidate lines wrapped in `@@@MEMOK_RECALL_START@@@` … `@@@MEMOK_RECALL_END@@@`. Pass numeric ids from `[id=…]`. Do not call if none were used. 中文：仅在实际采用候选时上报 id。"
+            : "Call when you **actually used** a candidate from system context or from `memok_recall_candidate_memories` output (`[id=…]`). Do not call if none were used. 中文：采用系统或工具返回的候选时上报。";
         return {
           name: "memok_report_used_memory_ids",
-          label: "Memok 记忆反馈",
+          label: "Memok usage feedback",
           description: reportDescription,
           parameters: ReportUsedMemoryIdsParams,
           async execute(_toolCallId: any, params: { sentenceIds?: number[] }) {
@@ -319,7 +330,7 @@ export function registerMemokPluginRuntime(
               const outsiders = sentenceIds.filter((id) => !allowedSet.has(id));
               if (outsiders.length > 0) {
                 api.logger?.warn?.(
-                  `[memok-ai] memok_report_used_memory_ids: 部分 id 不在本轮候选内: ${outsiders.join(", ")}`,
+                  `[memok-ai] memok_report_used_memory_ids: ids not in this round's candidates: ${outsiders.join(", ")} (中文：部分 id 不在本轮候选内)`,
                 );
               }
             }
@@ -333,12 +344,14 @@ export function registerMemokPluginRuntime(
               } catch (error: unknown) {
                 const msg =
                   error instanceof Error ? error.message : String(error);
-                api.logger?.error(`[memok-ai] 记忆反馈写库失败: ${msg}`);
+                api.logger?.error(
+                  `[memok-ai] feedback DB write failed: ${msg} (中文：写库失败)`,
+                );
                 return {
                   content: [
                     {
                       type: "text" as const,
-                      text: `更新记忆库失败：${msg}`,
+                      text: `Failed to update memory DB: ${msg} 中文：更新失败。`,
                     },
                   ],
                   details: { error: true, sentenceIds, validIds },
@@ -347,10 +360,10 @@ export function registerMemokPluginRuntime(
             }
             const text =
               sentenceIds.length === 0
-                ? "未上报任何 id（空数组）。若你未使用候选记忆，这是正确的；若使用了请传入对应 id。"
+                ? "No ids reported (empty array). Correct if you used no candidates; otherwise pass ids. 中文：空数组在未采用候选时正确。"
                 : validIds.length === 0
-                  ? "上报的 id 均不在本轮可校验的候选列表内，未更新数据库。"
-                  : `已更新 ${updatedCount} 条句子（weight 每次+1；跨日则当日 duration 计数从 1 起；同日 duration 最多+3 次）`;
+                  ? "None of the reported ids matched this round's verifiable list; DB unchanged. 中文：id 均不可校验，未更新库。"
+                  : `Updated ${updatedCount} sentence row(s) (weight +1; per-day duration rules apply). 中文：已更新句子权重/时长规则见核心文档。`;
             return {
               content: [{ type: "text" as const, text }],
               details: {
@@ -365,7 +378,7 @@ export function registerMemokPluginRuntime(
       },
       { name: "memok_report_used_memory_ids" },
     );
-    api.logger?.info("[memok-ai] 已注册工具 memok_report_used_memory_ids");
+    api.logger?.info("[memok-ai] registered tool memok_report_used_memory_ids");
   }
 
   api.on("agent_end", (event: any, hookCtx: any) => {
@@ -392,7 +405,7 @@ export function registerMemokPluginRuntime(
       } else {
         startIdx = Math.max(0, turns.length - INITIAL_TURN_WINDOW);
         api.logger?.info(
-          `[memok-ai] 会话历史发生重写，回退窗口模式: session=${sessionId}, turns=${turns.length}, lastCount=${state.lastCount}`,
+          `[memok-ai] transcript prefix changed; reset window: session=${sessionId}, turns=${turns.length}, lastCount=${state.lastCount} (中文：历史重写，回退窗口)`,
         );
       }
     }

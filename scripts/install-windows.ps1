@@ -5,7 +5,8 @@ Param(
 
 $ErrorActionPreference = "Stop"
 
-# 中文版 / Gitee 安装说明：在运行 irm … | iex 前设置 $env:MEMOK_REPO_URL 为 Gitee 仓库即可覆盖下方默认（GitHub）。
+# Gitee / CN: set $env:MEMOK_REPO_URL before `irm ... | iex` to override the default GitHub clone URL.
+# 中文：境内可设 MEMOK_REPO_URL 指向 Gitee 再执行安装脚本。
 if ($env:MEMOK_REPO_URL -and $env:MEMOK_REPO_URL.Trim().Length -gt 0) {
   $RepoUrl = $env:MEMOK_REPO_URL.Trim()
 }

@@ -1,6 +1,6 @@
 /**
- * 将 `plugins.entries.memok-ai.config` 中的 LLM 相关项映射到与 CLI 相同的环境变量，
- * 供 `new OpenAI()` / `resolveModel` 等沿用。已设置的非空环境变量**不会被覆盖**。
+ * Map `plugins.entries.memok-ai.config` LLM fields to the same env vars as the memok-ai CLI,
+ * for `new OpenAI()` / `resolveModel`. Non-empty env vars are **never overwritten**.
  */
 
 export type MemokLlmProvider =
@@ -15,13 +15,13 @@ export type MemokLlmProvider =
 
 export type MemokLlmEnvConfig = {
   llmProvider?: MemokLlmProvider;
-  /** 写入 `OPENAI_API_KEY`（若进程内尚未设置） */
+  /** Sets `OPENAI_API_KEY` if not already set in the process */
   llmApiKey?: string;
-  /** 仅 `llmProvider=custom` 时使用，写入 `OPENAI_BASE_URL`（若尚未设置） */
+  /** When `llmProvider=custom`, sets `OPENAI_BASE_URL` if unset */
   llmBaseUrl?: string;
-  /** 写入 `MEMOK_LLM_MODEL`（若尚未设置） */
+  /** Sets `MEMOK_LLM_MODEL` if unset */
   llmModel?: string;
-  /** 预设模型（通常来自 UI 下拉），当 `llmModel` 为空时回退使用 */
+  /** Preset model (UI dropdown); used when `llmModel` is empty */
   llmModelPreset?: string;
 };
 
@@ -29,7 +29,7 @@ const ENV_KEY = "OPENAI_API_KEY";
 const ENV_BASE = "OPENAI_BASE_URL";
 const ENV_MODEL = "MEMOK_LLM_MODEL";
 
-/** OpenAI 兼容 HTTP 端点（末尾一般含 `/v1`） */
+/** OpenAI-compatible HTTP base (usually ends with `/v1`) */
 const PRESET_BASE_URL: Record<
   Exclude<MemokLlmProvider, "inherit" | "openai" | "custom">,
   string
@@ -63,7 +63,7 @@ function resolveBaseUrl(
   return PRESET_BASE_URL[provider];
 }
 
-/** 供 `config.toml` 组装：由插件 LLM 配置解析 OpenAI 兼容 Base URL。 */
+/** Resolve OpenAI-compatible base URL from plugin LLM config (for config.toml assembly). */
 export function resolveLlmBaseUrlForProvider(
   cfg: MemokLlmEnvConfig,
 ): string | undefined {
@@ -89,7 +89,7 @@ export function applyMemokPluginLlmEnv(
     const base = resolveBaseUrl(cfg, provider);
     if (provider === "custom" && !base) {
       logger?.warn?.(
-        "[memok-ai] llmProvider=custom 但未设置 llmBaseUrl，OPENAI_BASE_URL 未从插件配置写入（请补全或使用网关环境变量）",
+        "[memok-ai] llmProvider=custom but llmBaseUrl is empty; OPENAI_BASE_URL not set from plugin config. Set llmBaseUrl or use gateway env. (中文：custom 需填写 Base URL)",
       );
     } else if (base) {
       envSetIfEmpty(ENV_BASE, base);
