@@ -31,6 +31,7 @@ describe("memok-ai/bridge (plugin integration surface)", () => {
       articleSentencesMaxOutputTokens: 8192,
       coreWordsNormalizeMaxOutputTokens: 32768,
       sentenceMergeMaxCompletionTokens: 2048,
+      relevanceScoreMaxLlmAttempts: 5,
     };
     const dream: DreamingPipelineConfig = {
       ...cfg,

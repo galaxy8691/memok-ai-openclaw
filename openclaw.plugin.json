@@ -49,6 +49,11 @@
       "label": "Dreaming: short→long-term weight threshold",
       "advanced": true,
       "help": "Written to config.toml: in predream, short-term rows with weight ≥ this value promote to long-term; positive integer; omit for core default 7. 中文：predream 短期升长期阈值。"
+    },
+    "relevanceScoreMaxLlmAttempts": {
+      "label": "Relevance score: max LLM attempts",
+      "advanced": true,
+      "help": "Written to config.toml: max retry attempts when LLM relevance scoring fails; positive integer; omit for core default 5 (max 32). 中文：相关性评分 LLM 失败最大重试次数。"
     }
   },
   "configSchema": {
@@ -304,6 +309,12 @@
         "minimum": 1,
         "maximum": 100000,
         "description": "Predream threshold: short-term rows with weight ≥ this promote to long-term (written to config.toml; core default 7). 中文：短期升长期 weight 阈值。"
+      },
+      "relevanceScoreMaxLlmAttempts": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 32,
+        "description": "Max LLM retry attempts for relevance scoring (written to config.toml; core default 5). 中文：相关性评分 LLM 失败最大重试次数。"
       }
     }
   }

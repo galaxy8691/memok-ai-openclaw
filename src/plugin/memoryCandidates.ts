@@ -63,7 +63,7 @@ function formatOneMemoryLine(s: MemoryExtractedSentence): string {
 /**
  * Build prependContext block; append lines until maxChars (best-effort keep first line).
  */
-function buildMemoryInjectBlock(
+export function buildMemoryInjectBlock(
   sentences: MemoryExtractedSentence[],
   maxChars: number,
 ): { text: string; ids: number[]; truncated: boolean } {

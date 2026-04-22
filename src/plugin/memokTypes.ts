@@ -62,6 +62,8 @@ export interface MemokConfig extends MemokLlmEnvConfig {
   articleWordImportInitialDuration?: number;
   /** Written to config.toml; predream short→long-term weight threshold */
   dreamShortTermToLongTermWeightThreshold?: number;
+  /** Written to config.toml; max LLM retry attempts for relevance scoring */
+  relevanceScoreMaxLlmAttempts?: number;
 }
 
 /** Gateway entry `plugins.entries.memok-ai`: top-level `enabled`, options under `config` */

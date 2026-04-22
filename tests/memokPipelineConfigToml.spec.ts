@@ -44,11 +44,13 @@ sentenceMergeMaxCompletionTokens = 2048
 articleWordImportInitialWeight = 2
 articleWordImportInitialDuration = 14
 dreamShortTermToLongTermWeightThreshold = 10
+relevanceScoreMaxLlmAttempts = 3
 `;
     const c = parseMemokPipelineTomlContent(raw, "test");
     expect(c.articleWordImportInitialWeight).toBe(2);
     expect(c.articleWordImportInitialDuration).toBe(14);
     expect(c.dreamShortTermToLongTermWeightThreshold).toBe(10);
+    expect(c.relevanceScoreMaxLlmAttempts).toBe(3);
   });
 
   it("rejects out-of-range optional positive int", () => {
@@ -69,6 +71,24 @@ articleWordImportInitialWeight = 0
     ).toThrow(/articleWordImportInitialWeight/);
   });
 
+  it("rejects relevanceScoreMaxLlmAttempts above max 32", () => {
+    expect(() =>
+      parseMemokPipelineTomlContent(
+        `
+dbPath = "/tmp/x.sqlite"
+openaiApiKey = "k"
+llmModel = "m"
+llmMaxWorkers = 1
+articleSentencesMaxOutputTokens = 8192
+coreWordsNormalizeMaxOutputTokens = 32768
+sentenceMergeMaxCompletionTokens = 2048
+relevanceScoreMaxLlmAttempts = 33
+`,
+        "test",
+      ),
+    ).toThrow(/relevanceScoreMaxLlmAttempts/);
+  });
+
   it("buildMemokPipelineConfigForWizard copies pipeline tuning from openclaw config", () => {
     const root = {
       plugins: {
@@ -80,6 +100,7 @@ articleWordImportInitialWeight = 0
               articleWordImportInitialWeight: 3,
               articleWordImportInitialDuration: 21,
               dreamShortTermToLongTermWeightThreshold: 9,
+              relevanceScoreMaxLlmAttempts: 8,
             },
           },
         },
@@ -89,6 +110,7 @@ articleWordImportInitialWeight = 0
     expect(c.articleWordImportInitialWeight).toBe(3);
     expect(c.articleWordImportInitialDuration).toBe(21);
     expect(c.dreamShortTermToLongTermWeightThreshold).toBe(9);
+    expect(c.relevanceScoreMaxLlmAttempts).toBe(8);
   });
 
   it("buildMemokPipelineConfigForWizard ignores invalid tuning numbers", () => {
@@ -101,6 +123,7 @@ articleWordImportInitialWeight = 0
               llmModel: "gpt-4o-mini",
               articleWordImportInitialWeight: 1.5,
               articleWordImportInitialDuration: 0,
+              relevanceScoreMaxLlmAttempts: 33,
             },
           },
         },
@@ -109,5 +132,6 @@ articleWordImportInitialWeight = 0
     const c = buildMemokPipelineConfigForWizard(root);
     expect(c.articleWordImportInitialWeight).toBeUndefined();
     expect(c.articleWordImportInitialDuration).toBeUndefined();
+    expect(c.relevanceScoreMaxLlmAttempts).toBeUndefined();
   });
 });

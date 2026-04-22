@@ -27,3 +27,6 @@ sentenceMergeMaxCompletionTokens = 2048
 
 # --- Optional: predream short→long-term minimum weight threshold (positive int; core default 7) ---
 # dreamShortTermToLongTermWeightThreshold = 7
+
+# --- Optional: max LLM retry attempts for relevance scoring (positive int; core default 5, max 32) ---
+# relevanceScoreMaxLlmAttempts = 5

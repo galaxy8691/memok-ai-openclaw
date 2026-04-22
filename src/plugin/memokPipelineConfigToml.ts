@@ -16,6 +16,7 @@ const MAX_LLM_WORKERS_CAP = 64;
 const MAX_ARTICLE_IMPORT_WEIGHT = 1_000_000;
 const MAX_ARTICLE_IMPORT_DURATION = 1_000_000;
 const MAX_DREAM_SHORT_TERM_WEIGHT_THRESHOLD = 100_000;
+const MAX_RELEVANCE_SCORE_MAX_LLM_ATTEMPTS = 32;
 
 function getMemokPluginConfigRecord(
   root: Record<string, unknown>,
@@ -40,12 +41,14 @@ function optionalPipelineTuningFromOpenclaw(
   | "articleWordImportInitialWeight"
   | "articleWordImportInitialDuration"
   | "dreamShortTermToLongTermWeightThreshold"
+  | "relevanceScoreMaxLlmAttempts"
 > {
   const out: Pick<
     MemokPipelineConfig,
     | "articleWordImportInitialWeight"
     | "articleWordImportInitialDuration"
     | "dreamShortTermToLongTermWeightThreshold"
+    | "relevanceScoreMaxLlmAttempts"
   > = {};
   const w = cfg.articleWordImportInitialWeight;
   if (
@@ -73,6 +76,15 @@ function optionalPipelineTuningFromOpenclaw(
     t <= MAX_DREAM_SHORT_TERM_WEIGHT_THRESHOLD
   ) {
     out.dreamShortTermToLongTermWeightThreshold = t;
+  }
+  const r = cfg.relevanceScoreMaxLlmAttempts;
+  if (
+    typeof r === "number" &&
+    Number.isInteger(r) &&
+    r >= 1 &&
+    r <= MAX_RELEVANCE_SCORE_MAX_LLM_ATTEMPTS
+  ) {
+    out.relevanceScoreMaxLlmAttempts = r;
   }
   return out;
 }
@@ -271,6 +283,12 @@ export function parseMemokPipelineTomlContent(
     pathLabel,
     MAX_DREAM_SHORT_TERM_WEIGHT_THRESHOLD,
   );
+  const relevanceScoreMaxLlmAttempts = expectOptionalPositiveInt(
+    o,
+    "relevanceScoreMaxLlmAttempts",
+    pathLabel,
+    MAX_RELEVANCE_SCORE_MAX_LLM_ATTEMPTS,
+  );
 
   return {
     dbPath,
@@ -290,6 +308,9 @@ export function parseMemokPipelineTomlContent(
       : {}),
     ...(dreamShortTermToLongTermWeightThreshold !== undefined
       ? { dreamShortTermToLongTermWeightThreshold }
+      : {}),
+    ...(relevanceScoreMaxLlmAttempts !== undefined
+      ? { relevanceScoreMaxLlmAttempts }
       : {}),
   };
 }
